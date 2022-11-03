@@ -1,0 +1,4279 @@
+Function Reference
+
+
+Function Reference Format
+The Function Reference uses the following format to describe each G-Merge function:
+
+ReturnType FunctionName(ParameterType ParameterName, ...)
+Description
+Example	Result
+expression 1	result 1
+expression 2	result 2
+expression 3	result 3
+
+The ReturnType is the data type that is returned by the function (Number, String, Date, or Boolean).  If the function does not return anything, the ReturnType is "Void".
+
+The FunctionName is the name of the function as it should appear in a G-Merge statement.
+
+The ParameterType is the data type of the parameter that the function expects (Number, String, Date, or Boolean).  If the function does not care what data type the parameter is, the ParameterType is "AnyType".
+
+The ParameterName is used as a point of reference when describing what the function does with its parameters.  The description below will refer to the parameter by this name, inside of tick marks.  Parameters that are inside of brackets are optional.
+
+The Description describes what the function does with its parameters (input) and what it returns (output).
+
+The Example and Result columns demonstrate what the function will return given a certain set of parameters.  The Result is expressed as a G-Merge literal, which means that string values are enclosed in quotes and date values are enclosed in the pound sign (#).
+
+
+
+Function Reference
+Following is a description of all available G-Merge functions, in alphabetical order.  There are alphabetical and categorical lists of these functions.
+
+
+Void abort()
+
+Discards the recipient and immediately halts the entire Send Operation or Incoming Operation.
+
+
+Number abs(Number n)
+
+Returns the absolute value of 'n'.
+Example	Result
+abs(-6)	6
+abs(312.49)	312.49
+
+
+String adapter_ip_get()
+
+Returns a string containing the IP address of the networking adapter that is used for all Internet communication.  However, this does not work if the "Use Default Adapter" box is checked because it is unknown which adapter the system will choose for each connection.
+
+When multiple adapters have been specified, this function is inaccurate while performing delayed retries, or when sending CC's and BCC's with Direct Delivery.
+
+See Also:
+Network Adapter
+
+Example	Result
+adapter_ip_get()	"192.168.0.100"
+
+
+Number add_recipients(Number where, String addresses)
+Adds one or more email addresses in the 'addresses' parameter to the mailing list.  The first parameter, 'where', indicates where the mailing list is located:
+1Removal List
+2Recipient List
+3Exclusion List
+5Recipient File
+6Exclusion File
+7Database
+10Suppression List
+
+The return value is the number of recipients that were successfully added, or -1 if there was an error.
+
+Notes:
+· The 'addresses' parameter is typically the _email predefined variable.
+· In the 'addresses' parameter, multiple email addresses can be specified by separating them with newlines, commas, or semi-colons.
+· The Prevent Duplicates option can be used to ensure that a recipient is not added to the mailing list twice.
+· It is also possible to add a recipient to a file with the file_append() function.
+· It is also possible to add a recipient to the database with the db_add_row(), db_add_row_table(), or dbe_add_row() functions.
+
+
+
+String attachment_content(Number index)
+Returns the contents of an incoming email's attachment.  'index' is the 0-based index of which attachment should be returned.  For example, attachment_content(0) returns the first attachment, attachment_content(1) returns the second attachment, etc.  If the index is invalid, an empty string is returned.
+
+This function can only be used in the Incoming Script.  For an example of how to use the attachment_content() function, see Incoming Script Example #9.
+
+
+String attachment_extension(Number index)
+Returns the filename extension of an incoming email's attachment.  'index' is the 0-based index of the attachment.  For example, attachment_extension(0) returns the first attachment's extension, attachment_extension(1) returns the second attachment's extension, etc.  If the index is invalid, an empty string is returned.  The extension will not have a leading period, and will always be in lower case.
+
+This function can only be used in the Incoming Script.
+
+
+String attachment_header(Number index, String header)
+Returns a header for one of the incoming email's attachments.  'index' is the 0-based index of the attachment.  'header' is the name of the header, without the colon, such as "Content-Type".
+
+Consider this snippet from a MIME email:
+
+------=_lD6iXck7_qY1hTjXi_MM
+Content-Type: application/octet-stream; name="Incoming Attachment Test.txt"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="Incoming Attachment Test2.txt"
+
+VGhpcyBpcyBhIHabcdefg2YgdGhlIEluY29taW5nIFNjcmlwdCdzIGdldF9hdHRhY2htZW50
+KCkgZnVuY3Rpb24uCmF0dGFjaG1lbnQxQGVtYWlsLmFkZHJlc3MuY29tCkExSzpsYXRjaF9h
+dHRhY2htZW50KCJBMUsiKSB3b3JrcyEK
+
+Assuming that this is the first attachment, attachment_header(0, "Content-Transfer-Encoding") would return "base64".
+
+This function can only be used in the Incoming Script.
+
+
+
+Boolean attachment_inline(Number n)
+Returns TRUE if an incoming email's attachment has the "Content-Disposition: inline" header.  Returns FALSE otherwise.  'n' is the 0-based index of the attachment.
+
+
+String attachment_name(Number index)
+Returns the filename of an incoming email's attachment.  'index' is the 0-based index of the attachment.  For example, attachment_name(0) returns the first attachment's filename, attachment_name(1) returns the second attachment's filename, etc.  If the index is invalid, an empty string is returned.
+
+This function can only be used in the Incoming Script.
+
+
+Number attachments_count()
+Returns the number of attachments contained in an incoming email.  This function can only be used in the Incoming Script.
+
+
+Void batch_run(String batch)
+Runs a batch of DOS commands.  The 'batch' parameter contains the commands.  If you want to run a .BAT file, use file_run() instead.
+
+Example:
+[[batch_run("md foo" + CR + "cd foo")]]
+
+
+
+Boolean blacklist_check(String ip, String blacklist)
+
+Returns TRUE if the specified IP address appears on the specified blacklist.
+
+The following example can be placed in the Pre-Send Script to check if a particular IP address is blacklisted.  If it is, the user is given the chance to abort the mailing.
+
+[[var ip = "11.22.33.44"]]
+[[if !blacklist_check(ip, "sbl-xbl.spamhaus.org")]]
+  [[if prompt("Blacklisted!", "'The IP address " + ip + " is blacklisted.  Continue anyway?'; button { text='Proceed'; default }; button { text='Cancel'; samerow }") = 3]]
+    [[disregard()]]
+  [[endif]]
+[[endif]]
+
+
+
+String blowfish_decrypt(String data, String key)
+Returns 'data' decrypted with the Blowfish algorithm using 'key'.  This function will only work on data that was encrypted by Gammadyne Mailer's blowfish_encrypt() function.
+
+
+String blowfish_encrypt(String data, String key)
+Returns 'data' encrypted with the Blowfish algorithm using 'key'.  The encrypted data can only be decrypted by Gammadyne Mailer's blowfish_decrypt() function.  Third-party implementations of Blowfish are not compatible.
+
+Note:  for legacy compatibility, 'data' is converted to narrow 8-bit characters before encrypting.
+
+
+
+String build_email_address(String name, String address [, String company] )
+Returns a compound email address built from its constituent parts (the person's name, simple email address, and company name).
+
+Notes:
+· Unless it is empty, the person's name is surrounded in "quotes".  The simple email address is surrounded in <angle brackets>.  Unless it is empty, the company name is surrounded in (parenthesis).
+· All leading and trailing whitespace are removed from all three fields.  Newlines are discarded.
+
+Example	Result
+build_email_address("John", "john@example.com", "Acme")	"""John"" <john@example.com> (Acme)"
+build_email_address("", "john@example.com", "Acme")	"<john@example.com> (Acme)"
+build_email_address("John", "john@example.com", "")	"""John"" <john@example.com>"
+build_email_address("", "john@example.com")	"<john@example.com>"
+
+
+String build_email_address2(String first_name, String last_name, String address [, String company] )
+Returns a compound email address built from its constituent parts (the person's first and last name, simple email address, and company name).
+
+Notes:
+· Unless it is empty, the person's name is surrounded in "quotes".  The simple email address is surrounded in <angle brackets>.  Unless it is empty, the company name is surrounded in (parenthesis).
+· All leading and trailing whitespace are removed from all three fields.  Newlines are discarded.
+
+Example	Result
+build_email_address2("John", "Public", "john@example.com", "Acme")	"""John Public"" <john@example.com> (Acme)"
+build_email_address2("", "", "john@example.com", "Acme")	"<john@example.com> (Acme)"
+build_email_address2("John", "", "john@example.com", "")	"""John"" <john@example.com>"
+build_email_address2("", "", "john@example.com")	"<john@example.com>"
+
+
+String build_email_list(String email1, String email2, ... )
+This builds a comma-separated list of email addresses, suitable to be used for a header.  It is typically used in the CC: or BCC: header.
+
+Any number of email addresses can be specified.  All leading and trailing whitespace is trimmed from each email address.  Blank email addresses are ignored.
+
+Example	Result
+build_email_list(" john@example.com", "", "jill@example.net ")	"john@example.com, jill@example.net"
+
+
+String build_name(String first, String last, [String middle,] [String suffix,] [String title] )
+This builds a person's name from components.  You will normally use this with your database columns like this:
+
+Dear [[build_name(MyFirstNameColumn, MyLastNameColumn, MyMiddleNameColumn, MyNameSuffixColumn, MyTitleColumn)]],
+
+And if you don't have one of these columns, simply replace it with an empty string literal:
+
+Hello [[build_name(MyFirstNameColumn, MyLastNameColumn, MyMiddleNameColumn, "", MyTitleColumn)]],
+
+Example	Result
+build_name("John", "Doe")	"John Doe"
+build_name("John", "Doe", "Allen")	"John Allen Doe"
+build_name("John", "Doe", "A")	"John A. Doe"
+build_name("John", "Doe", "", "Jr.")	"John Doe, Jr."
+build_name("John", "Doe", "", "", "Dr.")	"Dr. John Doe"
+build_name(" John ", " Doe ", " Z ", " Sr. ", " Dr. ")	"Dr. John Z. Doe, Sr."
+
+
+Number change_address(String old, String new [, Number flags] )
+Changes every occurrence of one email address in the mailing list to another.  The 'old' parameter specifies the email address to be changed.  The 'new' parameter specifies the email address that it will be changed to.  This uses the project settings to determine if the change should be made in a Database, Recipient File, or Recipient List.
+
+The optional third parameter 'flags' can be any sum of the following:
+
+Value	Description
+1	The database will perform the search, for performance.  The old and new addresses should be simple.  Case sensitivity depends on the database.
+2	Reduce the old address from compound to simple.
+4	Reduce the new address from compound to simple.
+8	Convert the new address to lower case.
+
+If the third parameter is not specified, it defaults to 1 for backward compatibility.
+
+Examples:
+[[change_address("old@foo.com", "new@bar.com")]]
+[[change_address("old@foo.com", "new@bar.com", 2+4+8)]]
+
+Notes:
+· The return value is the number of changes that were successfully completed.
+· This function performs the same operation as the "Change Recipient Address" tool.
+· This function can only be called from the Incoming Script.
+· A report of the operation is recorded in the Incoming Log.
+· If multiple Recipient Files are specified, the operation is performed on all of them.
+· If both a Recipient File and a Recipient List are specified, the operation is performed on both.
+
+
+
+String char(Number n)
+Returns a string containing one character whose unicode value is 'n'.
+
+Note: this may return a 2-character string for some values, see surrogate pairs.
+
+Example	Result
+char(65)	"A"
+
+
+String color_saturation_scale(String c, Number scale)
+Calculates a color with an adjusted saturation.  'c' is the original color, in hex format such as "37E62A".  'scale' is the saturation adjustment, from -1.0 to 1.0.  At -1.0, the color is turned completely grey.  At 0.0, the color does not change.  At 1.0, the color is given maximum saturation (without changing the hue or luminosity).
+
+The return value is the adjusted color, in hex format.
+
+Example	Result
+color_saturation_scale("37E62A", .5)	"2DF21E"
+color_saturation_scale("37E62A", -.5)	"60B759"
+
+
+String color_scale(String c, Number scale)
+Calculates a color with an adjusted brightness.  'c' is the original color, in hex format such as "37E62A".  'scale' is the brightness adjustment, from -1.0 to 1.0.  At -1.0, the color is turned completely black.  At 0.0, the color does not change.  At 1.0, the color is turned completely white.
+
+The return value is the adjusted color, in hex format.
+
+Example	Result
+color_scale("37E62A", .5)	"77EE6E"
+color_scale("37E62A", -.5)	"188010"
+
+
+Number compare(AnyType v1, AnyType v2)
+Compares the two parameters.  Returns -1 if 'v1' < 'v2', 0 if 'v1' = 'v2', or +1 if 'v1' > 'v2'.
+
+Notes:
+· If 'v2' is not the same data type as 'v1', then its value is converted to the same type as 'v1' before the comparison is made.  If 'v2' is a variable, this will not change the contents of the variable.
+· To compare two values, normally the relational operators are used.  This function is useful in an HTML body because there is no risk of the "<" and ">" characters being encoded by an HTML editor.
+· String comparisons are case-insensitive.
+· Earlier dates are less than later dates.  If the dates also contain a time, this will be used as a tiebreaker for equal dates.
+
+Example	Result
+compare(4, 8)	-1
+compare(42, 23)	1
+compare(16, 16)	0
+compare("foo", "barber")	1
+compare("azz", "b")	-1
+compare("foo", "FOO")	0
+compare(#4/15/2008 3:15:29#, #5/16/2007 4:16:30#)	1
+compare(#4/15/2008 3:15:29#, #4/15/2008 3:15:30#)	-1
+compare(#2003/8/16 9:03p#, #8/16/03 21:03:00#)	0
+
+
+String convert_from_base64(String s)
+Returns 's' converted back from Base64 encoding.
+
+See Also:
+convert_to_base64()
+
+Example	Result
+convert_from_base64("dGhpcyBpcyBhIHRlc3Q=")	"this is a test"
+
+
+String convert_from_header(String s)
+Returns the parameter 's' decoded from MIME header encoding.
+
+Note:  it is not necessary to use this function on the return value from the incoming_get_header() and mime_get_header() functions.  They already perform the decoding.
+
+See also:
+convert_to_header()
+header_to_html()
+
+Example	Result
+convert_from_header("foo")	"foo"
+convert_from_header("=?iso-8859-1?Q?foo=3D?=bar")	"foo=bar"
+
+
+String convert_from_hex(String s)
+Returns 's' converted from ASCII hexadecimal digits.  Fails unless the string contains an even number of characters, or if any character is not a hexadecimal digit.
+
+See Also:
+convert_to_hex()
+
+Example	Result
+convert_from_hex("414243")	"ABC"
+
+
+String convert_from_html(String s)
+Returns 's' with all characters converted back from HTML encoding.
+
+See Also:
+convert_to_html()
+html_from_text()
+mime_convert_to_text()
+
+Example	Result
+convert_from_html("&lt;-&gt;")	"<->"
+
+
+String convert_from_qp(String s)
+Returns 's' converted back from Quoted-Printable encoding.
+
+See Also:
+convert_to_qp()
+
+Example	Result
+convert_from_qp("foo=5Fbar =3D =3F")	"foo_bar = ?"
+
+
+String convert_from_unicode(String s, [, Number codepage] )
+Returns the string 's' converted from 16-bit unicode characters to 8-bit ASCII characters.  The conversion uses 'codepage' to translate the characters.  For example, 1252 is the code page for Western European.  If 'codepage' is not specified, the system's default code page is used.
+
+See also:
+Code Pages
+convert_to_unicode()
+convert_from_utf8()
+
+
+
+String convert_from_url(String s)
+Returns 's' with all characters converted back from URL encoding.
+
+See Also:
+convert_to_url()
+extract_url_field()
+
+Example	Result
+convert_from_url("foo%20%26%20bar%3F")	"foo & bar?"
+
+
+String convert_from_utf7(String s)
+Returns 's' converted back from UTF-7 encoding.
+
+Example	Result
+convert_from_utf7("+AFs-foo+AF0-")	"[foo]"
+
+
+String convert_from_utf8(String s)
+Returns 's' converted back from UTF-8 encoding.
+
+Example	Result
+convert_from_utf8("fooâ€™bar")	"foo'bar"
+
+
+String convert_from_uuencode(String s)
+Returns 's' converted back from UUENCODE encoding.
+
+See Also:
+convert_to_uuencode()
+
+Example	Result
+convert_from_uuencode(".=&AI<R!I<R!A('1E<W0 ")	"this is a test"
+
+
+String convert_html_to_text(String s)
+Returns 's' converted from HTML to plain text.  This simply strips out all of the HTML tags, and converts <br> tags to newlines.  Everything before the <body> tag and after the </body> tag is ignored.
+
+See Also:
+convert_to_html()
+html_from_text()
+mime_convert_to_text()
+
+Example	Result
+convert_html_to_text("x<body>foo</body>x")	"foo"
+
+
+String convert_lower_case(String s)
+Returns 's', with all letters converted to lower case.
+
+See Also:
+convert_title_case()
+convert_upper_case()
+
+Example	Result
+convert_lower_case("foo BAR")	"foo bar"
+
+
+String convert_title_case(String s)
+Returns 's', with all letters converted to title case.
+
+See Also:
+convert_lower_case()
+convert_upper_case()
+
+Example	Result
+convert_title_case("foo BAR")	"Foo Bar"
+
+
+String convert_to_base64(String s [, Boolean wrap] )
+Returns 's' converted to Base64 encoding.  If 'wrap' is TRUE, newlines are inserted every 72 characters.  If 'wrap' is FALSE or omitted, the return value is one continuous line.
+
+See Also:
+convert_from_base64()
+
+Example	Result
+convert_to_base64("this is a test", FALSE)	"dGhpcyBpcyBhIHRlc3Q="
+
+
+Date convert_to_date(String s [, Boolean day_first] )
+Returns the string 's' converted into a date or date/time.  If 'day_first' is TRUE, the conversion will assume that the day appears before the month (European format).  If 'day_first' is FALSE or omitted, it is assumed that the month appears before the day (American format).
+
+Notes:
+· This function can also handle months specified by their English name.  For example, convert_to_date("30 March 96 11:03:4 p.m.") returns #3/30/96 23:3:04#.  Three-letter abbreviations of English month names are also supported.
+· This function ignores a leading day-of-week name.  Sorry, but currently only English day names are recognized.  Three-letter abbreviations of English day names are also ignored.
+· This function can also handle strings that specify a time only, no date.
+· This function correctly handles 2-digit years.
+
+Example	Result
+convert_to_date("7/20/2003")	#7/20/2003#
+convert_to_date("7/20/03", FALSE)	#7/20/2003#
+convert_to_date("27/10/2003", TRUE)	#10/27/2003#
+convert_to_date("Tuesday, 7-Oct-97")	#10/7/1997#
+convert_to_date("Thu 4/21/2019 4:37:12p")	#4/21/2019 16:37:12#
+convert_to_date("11:03:4a")	#11:03:04#
+convert_to_date("January 16th, 1943")	#1/16/1943#
+
+
+String convert_to_header(String s)
+This converts 's' to MIME header encoding.  Since Gammadyne Mailer already converts the project settings to MIME header encoding, there is no known reason to use this function.
+
+See also:
+convert_from_header()
+
+Example	Result
+convert_to_header(latch_html_until("Name:", "<br>"))	"=?UTF-8?B?RWR1YXJkbyDEgMXDhsSuxIzDbnR1cmE=?="
+convert_to_header(latch_text("Name:"))	"=?UTF-8?B?4WR3YcJkbyDEgMOBDhsSuxIzDbnRdcmf=?="
+
+ 
+String convert_to_hex(String s)
+Returns 's' converted to ASCII hexadecimal digits.
+
+See Also:
+convert_from_hex()
+
+Example	Result
+convert_to_hex("ABC")	"414243"
+
+
+String convert_to_html(AnyType s)
+Returns 's' with all problematic characters converted to HTML encoding.  This includes all non-ASCII characters and <>&
+
+Notes:
+· In the HTML Body, the output of all G-Merge statements will perform this conversion automatically if the "Canonicalize G-Merge Output" box is checked.
+· This should not be used on HTML source code because it encodes <>&.  For that, use html_neutralize() instead.
+· Newlines are converted to '<br>'.
+
+See Also:
+convert_from_html()
+html_from_text()
+html_neutralize()
+mime_convert_to_html()
+
+Example	Result
+convert_to_html("<© 2021>")	"&lt;&copy; 2021&gt;"
+
+
+Number convert_to_number(AnyType v)
+Returns the parameter 'v' converted into a number.  'v' is normally a string, although it can be any data type.  However, if 'v' is a date, 0 is returned.
+
+Note:  if 'v' is a string, the first character must be a digit, plus, or minus.  Otherwise, 0 is returned.  Also, the string should not contain commas.  To avoid these restrictions, use the convert_to_number2() function instead.
+
+Example	Result
+convert_to_number("714")	714
+convert_to_number("-39.68")	-39.68
+convert_to_number(123.4)	123.4
+convert_to_number(#3/17/2003#)	0
+convert_to_number("@123")	0
+convert_to_number("56,789")	56
+
+
+Number convert_to_number2(AnyType v)
+This function is identical to the convert_to_number() function, except that it is less restrictive in how a string parameter can be formatted.  Any characters at the beginning of the string that are not a digit, plus, or minus are ignored.  Commas are also ignored.
+
+Example	Result
+convert_to_number2("@-123")	-123
+convert_to_number2("56,789")	56789
+convert_to_number2("xxx")	0
+
+
+String convert_to_qp(String s)
+Returns 's' converted to Quoted-Printable encoding.
+
+See Also:
+convert_from_qp()
+
+Example	Result
+convert_to_qp("foo_bar = x ")	"foo_bar =3D x=20"
+
+
+String convert_to_string(AnyType v)
+Returns 'v' converted into a string.  'v' can be any data type, even a string.
+
+See also:
+convert_to_number()
+date_format()
+number_format()
+
+Example	Result
+convert_to_string(714)	"714"
+convert_to_string(#05/12/87 13:14:15#)	"5/12/1987 13:14:15"
+convert_to_string(FALSE)	"0"
+convert_to_string(TRUE)	"1"
+convert_to_string("abc")	"abc"
+
+
+String convert_to_unicode(String s, [, Number codepage] )
+Returns the string 's' converted from 8-bit ASCII characters to 16-bit unicode characters.  The conversion uses 'codepage' to translate the characters.  For example, 1252 is the code page for Western European.  If 'codepage' is not specified, the system's default code page is used.
+
+See also:
+Code Pages
+convert_from_unicode()
+convert_from_utf8()
+
+
+
+String convert_to_url(String s)
+Returns 's' with all problematic characters converted to URL encoding.  This should be used when embedding data in a hyperlink, like this:
+
+http://www.example.com/page.php?parameter=[[convert_to_url(some_database_column)]]
+
+
+See Also:
+convert_from_url()
+extract_url_field()
+
+Example	Result
+convert_to_url("foo & bar?")	"foo%20%26%20bar%3F"
+
+
+String convert_to_utf8(String s)
+Returns 's' converted into UTF-8 encoding.
+
+See Also:
+convert_from_utf8()
+
+Example	Result
+convert_to_utf8("€÷¾")	"Â€Ã·Â¾"
+
+
+String convert_to_uuencode(String s)
+Returns 's' converted to UUENCODE encoding.
+
+See Also:
+convert_from_uuencode()
+
+Example	Result
+convert_to_uuencode("this is a test")	".=&AI<R!I<R!A('1E<W0 "
+
+
+String convert_upper_case(String s)
+Returns 's', with all letters converted to upper case.
+
+See Also:
+convert_lower_case()
+convert_title_case()
+
+Example	Result
+convert_upper_case("foo BAR")	"FOO BAR"
+
+
+Boolean cs_enter(String name [, Number timeout] )
+Enters a named, global critical section.  A critical section can only be accessed by one thread at a time.  When a thread enters the critical section, no other thread can enter the critical section until the first thread leaves it.
+
+The return value is TRUE if successful, or FALSE if the critical section could not be entered because another process has entered it and not yet left.  The optional second parameter specifies how long, in milliseconds, the function will wait for the critical section to become unlocked.  If this parameter is zero or not specified, no wait will occur, and the function will return immediately.
+
+Notes:
+· The name of the critical section can be anything, as long as all competing threads agree on it.  We recommend using a brief description of the critical section's purpose.
+· If cs_enter() is called a second time, the first critical section is automatically released before the second one is entered.
+· If 'name' is empty, the cs_enter() function does nothing, and FALSE is returned.
+· Other applications can enter the same critical section by calling the CreateMutex(NULL, TRUE, name) API function in KERNEL32.DLL.
+· The lock on the critical section is released when cs_leave() is called, or automatically when the G-Merge script is done being processed.
+
+
+
+Void cs_leave()
+Releases the lock on the global critical section that was entered by cs_enter().  This function is called automatically when the script is done being processed.  cs_leave() must never be called without calling cs_enter() first.
+
+
+Void csv_append(String filepath, AnyType data1, ...)
+Appends a line of CSV data to the file identified in the first parameter.  The data is specified in additional parameters, of which there is no limit.
+
+Notes:
+· If the file does not already exist, it will be created.
+· If the last character of the file is not a newline, one will be appended before the line is appended.
+· The newline is always a CR/LF pair.
+· The column separator is always the comma.
+· Any data that contains a comma, quote mark, semi-colon, tab, or newline will be enclosed in quotes.
+
+Example:
+[[csv_append("c:\foo\bar.csv", _email, _now, 12, "1;2", #1/1/2000#, TRUE)]]
+
+Resulting line:
+foo@bar.com,5/1/2009 17:55:00,12,"1;2",1/1/2000,1
+
+
+
+Void csv_append2(String filepath, AnyType data1, ...)
+This is a more advanced version of the csv_append() function.  The file must already exist, and the first line must contain the column names.  From the first line, csv_append2() will automatically detect the optional Byte Order Mark, the separator (comma, semi-colon, tab, vertical bar), and the type of newline (CR/LF, LF/CR, CR, or LF).  These will be used to ensure that the new data matches the format of the file.
+
+Notes:
+· The number of column names in the file must match the number of data fields passed to csv_append2().  If not, a fatal error will occur, and the whole operation will stop.
+· If the last character of the file is not a newline, one will be appended before the line is appended.
+· Any data that contains a comma, quote mark, semi-colon, tab, or newline will be enclosed in quotes.
+
+Example:
+[[csv_append2("c:\path\filename.csv", "string literal", 123, _email, date_format(_now, "d-M-yy HH:ii:ss"))]]
+
+Resulting line:
+string literal,123,bob@example.com,19-Jun-2018 20:51:13
+
+
+
+Date date_add_days(Date date, Number days)
+Returns the result of adding 'days' to 'date'.
+
+Example	Result
+date_add_days(#3/31/24 4:55:56#, 4)	#4/4/2024 4:55:56#
+date_add_days(#3/31/23 4:55:56#, -34)	#2/25/2023 4:55:56#
+
+
+Date date_add_hours(Date date, Number hours)
+Returns the result of adding 'hours' to 'date'.
+
+Example	Result
+date_add_hours(#3/31/24 4:55:56#, 20)	#4/1/2024 0:55:56#
+date_add_hours(#3/31/24 4:55:56#, -20)	#3/30/2024 8:55:56#
+
+
+Date date_add_minutes(Date date, Number minutes)
+Returns the result of adding 'minutes' to 'date'.
+
+Example	Result
+date_add_minutes(#3/31/24 4:55:56#, 20)	#3/31/2024 5:15:56#
+date_add_minutes(#3/31/24 4:55:56#, -65)	#3/31/2024 3:50:56#
+
+
+Date date_add_months(Date date, Number months)
+Returns the result of adding 'months' to 'date'.  The day is not allowed to go past the end of the month.
+
+Example	Result
+date_add_months(#4/13/00#, 1)	#5/13/2000#
+date_add_months(#12/31/00#, 2)	#2/28/2001#
+date_add_months(#5/31/99 4:15:25#, 4)	#9/30/1999 4:15:25#
+
+
+Date date_add_seconds(Date date, Number seconds)
+Returns the result of adding 'seconds' to 'date'.
+
+Example	Result
+date_add_seconds(#3/31/24 4:55:56#, 80)	#3/31/2024 4:57:16#
+date_add_seconds(#3/31/24 4:55:56#, -90)	#3/31/2024 4:54:26#
+
+
+Date date_add_years(Date date, Number years)
+Returns the result of adding 'years' to 'date'.
+
+Example	Result
+date_add_years(#3/31/24 4:55:56#, 4)	#3/31/2028 4:55:56#
+date_add_years(#3/31/24 4:55:56#, -4)	#3/31/2020 4:55:56#
+
+
+Date date_build(Number month, Number day, Number year)
+Returns a date value that contains the specified month, day, and year.
+
+See also:
+datetime_build()
+Example	Result
+date_build(9, 4, 2002)	#9/4/2002#
+
+
+Date date_current( [Boolean no_time] )
+Returns the current date/time (according to the computer's clock, in local time).  If the optional 'no_time' parameter is TRUE, only the current date is returned.
+
+Note:  you can also use the _now variable, however this variable reflects the time when the script started executing.
+
+Example	Result
+date_current()	#9/4/2017 14:23:37#
+date_current(FALSE)	#9/4/2017 14:23:37#
+date_current(TRUE)	#9/4/2017#
+
+
+Date date_current_utc()
+Returns the current date/time, in Universal Coordinated Time (UTC).
+
+Example	Result
+date_current_utc()	#3/17/2015 16:32:14#
+
+
+Number date_day_of_year( [Date d] )
+Returns the numeric day-of-year (from 1-366) for 'd'.  If the parameter 'd' is omitted, the current date is used.
+
+Example	Result
+date_day_of_year(#2/1/1995#)	32
+
+
+Number date_days_between(Date d1, Date d2)
+Returns the number of days between 'd1' and 'd2', rounded down.  If 'd2' occurs before 'd1', this will return a negative value.
+
+Example	Result
+date_days_between(#3/13/1995#, #03.25.95#)	12
+
+
+String date_format(Date d [, String format])
+Returns date 'd' formatted as a string with 'format'.
+
+Notes:
+· For an explanation of the date format codes, see the chapter on G-Merge.
+· If the 'format' parameter is omitted, the default "d-M-yy h:ii:ssap" is used.
+
+Example	Result
+date_format(_now, "yy/d/m HH:ii:ss")	"2018/7/1 13:41:07"
+date_format(#4/13/00#, "MM d, yy")	"April 13, 2000"
+
+
+String date_format_regional(Date d [, Number options] [, String date_format] [, String time_format] )
+Returns date 'd' formatted as a string using your computer's regional settings, which are configured in Start Menu > Settings > Time & Language > Region.
+
+The optional 'options' parameter can be any sum of the following values:
+
+Value	Description
+1	Use the system's regional settings instead of the user's.
+2	Use the short date format (e.g. "9/27/2014").
+4	Use the long date format (e.g. "Saturday, September 27, 2014").  This is not recommended because it may or may not contain a day of week.
+8	Use the month/year format (e.g. "September, 2014").
+16	Do not display minutes or seconds.
+32	Do not display seconds.
+64	Do not display AM/PM.
+128	Always use 24-hour format.
+256	Do not display the date, only the time.
+512	Do not display the time, only the date.
+2048	Use the long date format that includes a day of week (e.g. "Saturday, September 27, 2014").
+4096	Use the long date format that doesn't have a day of week (e.g. "September 27, 2014").
+
+The optional 'date_format' parameter can contain any of the following codes:
+
+Code	Meaning	Digits	Example for Friday, March 5, 2009
+y	Year	1-2	9
+yy	Year	2	09
+yyyy	Year	4	2009
+M	Month, numeric	1-2	3
+MM	Month, numeric	2	03
+MMM	Month, abbreviation	3	Mar
+MMMM	Month, text	?	March
+d	Day, numeric	1-2	5
+dd	Day, numeric 	2	05
+ddd	Weekday, abbreviation	3	Fri
+dddd	Weekday, text	?	Friday
+
+The optional 'time_format' parameter can contain any of the following codes:
+
+Code	Meaning	Digits	Example for 1:02:03p
+h	Hours, 12-hour clock	1-2	1
+hh	Hours, 12-hour clock	2	01
+H	Hours, 24-hour clock	1-2	13
+HH	Hours, 24-hour clock	2	13
+m	Minutes	1-2	2
+mm	Minutes	2	02
+s	Seconds	1-2	3
+ss	Seconds	2	03
+t	A/P	1	P
+tt	AM/PM	2	PM
+
+Notes:
+· If no options are specified, the short date format is used.
+· This uses your regional settings, not the recipient's.  Such a thing is not possible.
+· Please note that these format codes are different than those used elsewhere.  That's because the operating system is formatting the date.
+
+Example	Result
+date_format_regional(_now)	"9/27/2014 7:00:37 PM"
+date_format_regional(_now, 1)	"9/27/2014 7:00:37 PM"
+date_format_regional(_now, 2)	"9/27/2014 7:00:37 PM"
+date_format_regional(_now, 4)	"Sabado, Septyembre 27, 2014 7:00:37 PM"
+date_format_regional(_now, 8)	"Septyembre, 2014 7:00:37 PM"
+date_format_regional(_now, 16)	"9/27/2014 7 PM"
+date_format_regional(_now, 32)	"9/27/2014 7:00 PM"
+date_format_regional(_now, 64)	"9/27/2014 7:00:37"
+date_format_regional(_now, 128)	"9/27/2014 19:00:37 PM"
+date_format_regional(_now, 256)	"7:00:37 PM"
+date_format_regional(_now, 512)	"9/27/2014"
+date_format_regional(_now, 2048)	"Sabado, Septyembre 27, 2014 7:00:37 PM"
+date_format_regional(_now, 4096)	"Septyembre 27, 2014 7:00:37 PM"
+date_format_regional(_now, 4 + 32)	"Sabado, Septyembre 27, 2014 7:00 PM"
+date_format_regional(_now, 0, "d-MMM-yyyy")	"27-Sep-2014"
+date_format_regional(_now, 0, "", "H:mm")	"19:00"
+
+
+Number date_hours_between(Date d1, Date d2)
+Returns the number of hours between 'd1' and 'd2', rounded down.  If 'd2' occurs before 'd1', this will return a negative value.
+
+Example	Result
+date_hours_between(#3/12/95 4:14:36#, #3/13/1995 07:14:36#)	27
+
+
+Number date_minutes_between(Date d1, Date d2)
+Returns the number of minutes between 'd1' and 'd2', rounded down.  If 'd2' occurs before 'd1', this will return a negative value.
+
+Example	Result
+date_minutes_between(#3/13/95 4:14:36#, #3/13/1995 07:14:36#)	180
+
+
+Number date_months_between(Date d1, Date d2)
+Returns the number of months between 'd1' and 'd2', rounded down.  If 'd2' occurs before 'd1', this will return a negative value.
+
+Example	Result
+date_months_between(#3/13/1995#, #3/1/96#)	11
+
+
+Number date_seconds_between(Date d1, Date d2)
+Returns the number of seconds between 'd1' and 'd2'.  If 'd2' occurs before 'd1', this will return a negative value.
+
+Example	Result
+date_seconds_between(#3/13/95 4:14:36#, #3/13/1995 07:14:36#)	10800
+
+
+Boolean date_valid(AnyType d)
+Returns TRUE if the parameter 'd' is a valid date.  This ignores the time associated with the date, if one is present.  Returns FALSE if 'd' is not a date type, even if it is a string representation of a valid date.
+
+See also:
+datetime_valid()
+Example	Result
+date_valid(#1/31/99#)	TRUE
+date_valid(#1/32/99#)	FALSE
+date_valid(#1/31/99 99:99:99#)	TRUE
+date_valid("1/31/99")	FALSE
+date_valid(convert_to_date("1/31/99"))	TRUE
+date_valid(NULL)	FALSE
+
+
+Number date_weekdays_between(Date d1, Date d2)
+Returns the number of weekdays between 'd1' and 'd2'.  This is inclusive (the days that fall on 'd1' and 'd2' are included in the count).
+
+Example	Result
+date_weekdays_between(#2/28/2014#, #03.25.14#)	18
+
+
+Number date_weeks_between(Date d1, Date d2)
+Returns the number of weeks between 'd1' and 'd2', rounded down.  If 'd2' occurs before 'd1', this will return a negative value.
+
+Example	Result
+date_weeks_between(#3/13/1995#, #3/27/95#)	2
+
+
+Number date_years_between(Date d1, Date d2)
+Returns the number of years between 'd1' and 'd2', rounded down.  If 'd2' occurs before 'd1', this will return a negative value.
+
+Example	Result
+date_years_between(#10/12/93 4:14:36#, #2/13/1996 07:14:36#)	2
+
+
+Date datetime_build(Number month, Number day, Number year, Number hours, Number minutes, Number seconds)
+Returns a date/time value that contains the specified month, day, year, hours, minutes, and seconds.  The hours should be specified in military time (0-23).
+
+See also:
+date_build()
+Example	Result
+datetime_build(9, 4, 2002, 16, 45, 52)	#9/4/2002 16:45:52#
+
+
+Boolean datetime_valid(AnyType dt)
+Returns TRUE if the parameter 'dt' is a valid date and time.  Returns FALSE if either the date or time is invalid.  Returns FALSE if 'd' is not a date type, even if it is a string representation of a valid date.
+
+
+See also:
+date_valid()
+Example	Result
+datetime_valid(#1/31/99 10:07p#)	TRUE
+datetime_valid(#1/99/99 10:07p#)	FALSE
+datetime_valid(#1/31/99 99:99:99#)	FALSE
+datetime_valid(#3/7/99#)	FALSE
+datetime_valid(#12:51:06#)	FALSE
+datetime_valid("1/31/99 10:07p")	FALSE
+datetime_valid(NULL)	FALSE
+
+
+Date day_of_month(Number year, Number month, Number day_of_week, Number ordinal)
+Returns the date of the first/second/etc. Sunday/Monday/etc. in the specified month.  'day_of_week' is 1 for Sunday, 2 for Monday, etc.  'ordinal' is 1 for the first occurrence, 2 for the second, etc.  Returns NULL if there is a bad parameter or 'ordinal' is 5 and there is no fifth occurrence.
+
+For example, to find the fourth Tuesday of this month, call this:
+
+day_of_month(extract_year(_now), extract_month(_now), 3, 4)
+
+Example	Result
+day_of_month(2016, 12, 6, 2)	#12/9/2016#
+day_of_month(2016, 11, 3, 5)	#11/29/2016#
+day_of_month(2015, 12, 5, 3)	#12/17/2015#
+day_of_month(2015, 5, 2, 5)	NULL
+
+
+Boolean db_acquire_last_row()
+Acquires the last row of the database for reading and writing.  Returns FALSE if an error occurs.
+
+The last row in the database must have the highest numeric value in the Primary Key, otherwise this function will not acquire the last row.  This function may be slow for large databases.
+
+Once the row is acquired, columns can be read from the row as normal, e.g. [[some_column_name]]
+
+Furthermore, columns can be altered with "LET" statements, or the row can be deleted with the db_delete_row() function.  However, for changes to work correctly, every row must have a unique value in the Primary Key.
+
+This function can only be used in the Incoming Script, Pre-Send Script, Post-Send Script, Success Script, or Failure Script.
+
+
+Boolean db_acquire_next_row()
+Acquires the next database row after a call to db_acquire_row().  A row is only acquired if the recipient email address specified in db_acquire_row() is present in the Recipient Column.  Returns FALSE if there are no more matching rows or an error occurs.
+
+Once the row is acquired, columns can be read from the row as normal, e.g. [[some_column_name]]
+
+Furthermore, columns can be altered with "LET" statements, or the row can be deleted with the db_delete_row() function.  However, for changes to work correctly, every row must have a unique value in the Primary Key.
+
+For an example on how to use db_acquire_next_row(), see Incoming Script Example #4.
+
+
+
+Boolean db_acquire_row(AnyType recipient [, String column] )
+Locates the database row that contains 'recipient'.  Returns TRUE if the recipient was found, FALSE otherwise.  The search for the value in the 'recipient' parameter is performed on the column named by the optional 'column' parameter.  If the 'column' parameter is omitted, the search is performed on the Recipient Column.
+
+Once the row is acquired, columns can be read from the row as normal, e.g. [[some_column_name]]
+
+Furthermore, columns can be altered with "LET" statements, or the row can be deleted with the db_delete_row() function.  However, for changes to work correctly, every row must have a unique value in the Primary Key.
+
+Notes:
+· This function can only be used in the Incoming Script, Pre-Send Script, Post-Send Script, Success Script, or Failure Script.
+· It is unnecessary to call db_acquire_row() in the Incoming Script when the Processing Mode is set to "Add to database".
+· The database column should be a 'varchar' data type, not 'text' (as referred to by SQL Server).  The 'text' data type is for extremely large character strings, and cannot be searched on with SQL.
+· Database performance is greatly improved by setting the Recipient Column's "Indexed" property.  Without this, the database must search every row in the table.
+· If the recipient may be found on other rows, call db_acquire_next_row() to acquire the next row where the recipient is present.
+· The search is case sensitive.  We recommend that the database contain only lower case email addresses.
+· For an example on how to use db_acquire_row(), see Incoming Script Example #3.
+
+
+
+Boolean db_acquire_row_id(AnyType id)
+Locates the database row whose Primary Key is 'id'.  Returns TRUE if the row was found, FALSE otherwise.
+
+Once the row is acquired, columns can be read from the row as normal, e.g. [[some_column_name]]
+
+Furthermore, columns can be altered with "LET" statements, or the row can be deleted with the db_delete_row() function.  However, for changes to work correctly, every row must have a unique value in the Primary Key.
+
+Notes:
+· This function can only be used in the Incoming Script, Pre-Send Script, Post-Send Script, Success Script, or Failure Script.
+· The "Use Database" box must be checked before the Incoming Operation is started.
+· db_acquire_next_row() cannot be called to acquire another row, since each value in the Primary Key is unique.
+
+
+
+Boolean db_add_row( [String ColumnName, AnyType Value] ... )
+Adds a row to the database table.  Returns TRUE if successful, FALSE otherwise.
+
+No parameters are required.  However, to populate the new row, a list of column names (inside quotes) and values can be specified.  Take this G-Merge statement for example:
+
+[[db_add_row("foo", 5, "bar", "xyz")]]
+
+The new row will contain the value 5 in the column named "foo", and the string "xyz" in the column named "bar".  Please note that it is important to place the column names inside quotes.
+
+Once the row is added, data can be read from the row, "LET" statements can change the row's contents, or the row can be deleted with the db_delete_row() function.  However, this requires that the database automatically store a new maximum value in the Primary Key.  Since the Primary Key is supposed to be the "Autonumber" data type, this is not usually a problem.
+
+Notes:
+· The row is always added to the project-specified Table.  To add a row to a different table, see the next function, db_add_row_table().
+· When the row is successfully added, the recipient's email address will automatically be stored to the Recipient Column.  This behavior can be overridden by specifying the Recipient Column in the function parameters.  Alternatively, assign a new value to the _email predefined variable before calling db_add_row().
+· This function can only be used in the Incoming Script, Pre-Send Script, Post-Send Script, Success Script, or Failure Script.
+· It is unnecessary to call db_add_row() in the Incoming Script when the Processing Mode is set to "Add to database".
+· The "Use Database" box must be checked for this function to work.
+· See Incoming Script Example #11 for an example of how to add recipients to the database without adding duplicates.
+
+See Also:
+db_add_row_table()
+db_delete_row()
+dbe_add_row()
+
+
+
+Boolean db_add_row_table(String table_name [, String ColumnName, AnyType Value] ... )
+Adds a row to the database table identified by the 'table_name' parameter .  Returns TRUE if successful, FALSE otherwise.
+
+This function does the same thing as the db_add_row() function, with a few exceptions:
+· Instead of using the Table Name field in the project, this function takes a table name as the first parameter.
+· The new row is not "acquired" after it is added to the table.  Data cannot be read from or written to the row.  There is no need to read data, since the only data in the row is put there by db_add_row_table().  There is no need to write data, since the additional parameters to db_add_row_table() are used to populate the new row.
+· The recipient's email address is not automatically stored in the Recipient Column.
+
+Example:
+
+[[db_add_row_table("my_table", "foo", 5, "bar", "xyz")]]
+
+The new row will contain the value 5 in the column named "foo", and the string "xyz" in the column named "bar".  Please note that it is important to place the column names inside quotes.
+
+Notes:
+· The "Use Database" box must be checked for this function to work.
+· To add a row to a table that is in a different database, use the dbe_add_row() function.
+
+
+
+AnyType db_call_func(String name [, AnyType param1 ...] )
+Calls a database stored function.  'name' is the name of the function.  This can be followed by 0 or more function parameters.  The return value of db_call_func() is the same value that is returned by the stored function.
+
+Notes:
+· This assumes the function is located in the database specified on the Database branch.  To call a function in a different database, use dbe_call_func() instead.
+· The operation will abort if any error occurs.
+· For SQL Server, it may be necessary to put "dbo." at the beginning of the function name.
+
+Example:
+[[var foo = db_call_func("myfunc", 4, "xyz", #11/19/2009#, TRUE)]]
+
+
+
+AnyType db_call_proc(String name [, AnyType param1 ...] )
+Calls a database stored procedure.  'name' is the name of the procedure.  This can be followed by 0 or more parameters.
+
+The return value of db_call_proc() is the value in the first column of the first row of the result set returned by the stored procedure.  If the stored procedure does not invoke a SELECT statement, the return value is NULL.
+
+Notes:
+· This assumes the procedure is located in the database specified on the Database branch.  To call a procedure in a different database, use dbe_call_proc() instead.
+· The operation will abort if any error occurs.
+
+Example:
+[[var foo = db_call_proc("myproc", 4, "xyz", #11/19/2009#, TRUE)]]
+
+
+
+Number db_delete_recipient(String email)
+Deletes every database row where 'email' matches the contents of the Recipient Column.  Returns the number of rows deleted.
+
+This function can only be called from the Incoming Script.  Normally, the _email variable is specified for the 'email' parameter, so that the recipient currently being processed is the one that gets removed.  Following is an example:
+
+[[db_delete_recipient(_email)]]
+
+
+Here is another example where the recipient is removed if the subject header contains the text "REMOVE":
+
+[[if str_contains_i(_subject, "REMOVE")]]
+    [[db_delete_recipient(_email)]]
+[[endif]]
+
+
+One final example extends the previous example by forcing the incoming email to be deleted, and stops executing the script after the recipient is deleted:
+
+[[if str_contains_i(_subject, "REMOVE")]]
+    [[db_delete_recipient(_email)]]
+    [[incoming_delete(TRUE)]]
+    [[disregard()]]
+[[endif]]
+
+
+Notes:
+· If the email address is compound (such as "Joe Public <foo@bar.com> (Acme)") then it will be automatically converted to simple form (i.e. "foo@bar.com") before the database search occurs.  The database itself must contain only simple addresses.
+· The email address is also converted to lower case before the database search occurs.  However, many databases are case-insensitive.  If your database is case-sensitive, this function will only work if all email addresses in the database are lower case.
+· The function will fail if the 'email' parameter is not a legal email address.
+· This function always deletes the entire row.  It does not obey the Removal Method.  Use remove_recipients() for that.
+· If the recipient appears in the database more than once, all occurrences are deleted, not just the first.
+· This function is usually faster than remove_recipients().  For optimal performance, the Recipient Column should be indexed.
+
+See also;
+Convert Email Addresses Case tool
+
+
+
+Boolean db_delete_row()
+Deletes the current database row.  Returns TRUE if successful, FALSE otherwise.
+
+This function is normally used in the Incoming Script to delete a database row that was just added.  It can also delete a database row during a Send Operation.  In this case, follow it with a disregard() function to stop processing the recipient.
+
+Following is a Failure Script example that deletes the recipient from the database if delivery fails 4 times.  This example assumes the database table contains a numeric column named "failure_count".
+
+[[let failure_count += 1]]
+[[if failure_count >= 4]]
+[[db_delete_row()]]
+[[endif]]
+
+
+Notes:
+· It is very important that the Primary Key has a unique value for every row in the table, otherwise this function might delete multiple rows.
+· When using a Custom SELECT Statement, it is imperative that the Primary Key field be set to the correct primary key for the table named in the Table Name field.  If this requirement cannot be met, use db_execute() to delete the row.
+
+
+
+String db_embed(String column_name, String image_filename)
+Embeds an image in the email, for use by the HTML Body.  The image pixel data is located in a database column.  Returns the proper URL that the HTML Body should use to reference the image.
+
+The first parameter, 'column_name', is a string containing the name of the database column that holds the image data.  This data should be in GIF, JPEG, or PNG format.
+
+The second parameter, 'image_filename', is the filename of the image.  This must have the correct extension for the image type.  Make sure this filename has no spaces or non-alphanumeric characters, otherwise the filename will be converted to a form that is safe for email.
+
+Following is an example that shows how to call this function from within the raw HTML code:
+
+<img src='[[db_embed("my_column_name", "foo.gif")]]' width=50 height=50 nomodify=1>
+
+Notes:
+· If the filename contains illegal characters, they will be automatically removed.
+· Multiple function calls that reference the same column will not cause the same image to be embedded more than once.
+· Notice the tick marks used by the "src" attribute (instead of quotes).  This is because the G-Merge tag contains quotes, and all these quotes will interfere with each other when using the WYSIWYG editor.
+· We recommend adding the "nomodify=1" attribute to the <img> tag so that the Image Locality feature does not result in an error being logged.
+
+
+
+Boolean db_execute(String sql [, String varname] )
+This function will make the database execute the SQL script in 'sql'.  If the optional 'varname' parameter specifies a variable name, the variable will be assigned the first column of the first row of the result set.  Returns TRUE if successful, FALSE otherwise.
+
+Example #1, adding a new row:
+[[if db_execute("INSERT INTO mytable(mycolumn) VALUES(" + sqlize(_email) + ")")]]
+[[db_acquire_last_row()]]
+[[let code = 5]]
+[[endif]]
+
+Notes:
+· This example adds a new row to the table named "mytable" and stores the recipient's email address (which is kept in the predefined variable named "_email") to the column named "mycolumn".
+· This example assumes that the table will store a new unique number in the table's Primary Key.  This number must have a new maximum value for the table.  If not, db_acquire_last_row() will fail.  To avoid this issue altogether, make all column assignments in the SQL statement itself.
+· This example assigns the value 5 to a database column named "code" to demonstrate how to populate the new row.  See the section on "let" statements for more information.
+· Note the use of the sqlize() function, which must be used when inserting a string literal into a SQL statement.  There is another function, sqlize_date(), which is useful for inserting date literals.
+
+
+Example #2, updating a row:
+[[db_execute("UPDATE mytable SET mycolumn1=1, mycolumn2='foo' WHERE tid=" + number_format(currentid))]]
+
+Notes:
+· This example demonstrates how to alter two columns named "mycolumn1" and "mycolumn2" in a table named "mytable".
+· When updating, it is very important that the WHERE clause isolates a single row.  Otherwise, multiple rows could be affected.  This example assumes that the current table has a column named "currentid" that corresponds to a unique value in the column named "tid" in the table named "mytable".  Your method of isolating a row will differ.
+
+
+Example #3, updating a row:
+[[var foo = "something"]]
+[[db_execute("UPDATE your_table SET your_column=" + sqlize(foo) + " WHERE your_recipient_column=" + sqlize(convert_lower_case(_email)))]]
+
+This example demonstrates how to store a variable ("foo") to the column "your_column" in the table "your_table".  The variable will be stored on every row where the column "your_recipient_column" has the same email address as the one in the _email variable.
+
+
+Example #4, deleting a row:
+[[db_execute("DELETE FROM my_table WHERE my_pkey=" + number_format(id))]]
+
+Notes:
+· This example deletes an entire row from "my_table" where the Primary Key, "my_pkey", matches the value in a numeric variable named "id".
+· In this scenario, the "id" variable would normally be latched from an incoming email.
+
+
+Example #5, stopping on errors:
+[[if !db_execute("...")]]
+  [[abort()]]
+[[endif]]
+
+
+Example #6, embedding the result of a stored procedure:
+[[var bar = ""]][[var success = db_execute("call foo();", "bar")]][[bar]]
+
+
+Example #7, obtaining the maximum value in a column:
+[[var max = 0]]
+[[var success = db_execute("SELECT MAX(my_pkey) FROM my_table_name", "max")]]
+
+
+For a good article on SQL, visit this web site.
+
+
+
+AnyType db_get(String field_name, String where)
+Returns a value from the database.  Unlike normal database access, this method can use a different database table than the one specified in the project.  The 'field_name' parameter is the database table name, followed by a period, followed by a column name.  The 'where' parameter must be a valid SQL WHERE clause, minus the "WHERE" keyword itself.
+
+Example:
+[[db_get("SomeTable.SomeColumn", "id = 6 AND index = 4")]]
+
+Example:
+[[db_get("Products.product_name", "pkey=" + convert_to_string(product_id))]]
+
+Notes:
+· db_get() returns a NULL value if the table or column name is invalid, or if any other error occurs.  The error is written to the log, but this will not interrupt the operation.
+· The WHERE clause can be empty.  If multiple rows are returned by the database, only the first row is used in the return value of db_get().
+· The type of db_get()'s return value will match the type of the database column.
+
+
+
+Date db_get_date(String field_name, String where)
+Same as the db_get() function, except the return value is converted into a Date.  Returns a null date on error.
+
+
+
+Number db_get_max(String field_name)
+Returns the largest numeric value in a database column.  The 'field_name' parameter is the database table name, followed by a period, followed by a column name.
+
+Example:
+[[var max = db_get_max("Foo.Bar")]]
+
+Notes:
+· db_get_max() returns a NULL value if the table or column name is invalid, or if any other error occurs.  The error is written to the log, but this will not interrupt the operation.
+
+
+
+Number db_get_number(String field_name, String where)
+Same as the db_get() function, except the return value is converted into a Number.  Returns 0 on error.
+
+
+
+String db_get_query()
+Returns a string containing the actual SQL SELECT statement that was issued to the database.
+
+Notes:
+· The SQL query is also shown near the beginning of the Send Log.
+· This returns an empty string if no database is being used.
+· This returns an empty string when performing an Incoming Operation.
+· This returns an empty string if called from the Pre-Send Script because the query has not yet been issued.
+
+Following is an example of a SQL query:
+
+SELECT *
+FROM [your table]
+WHERE foo = 'this is a custom where clause'
+ORDER BY [your order column]
+
+
+See Also:
+Display SELECT Statement
+
+
+
+String db_get_string(String field_name, String where)
+Same as the db_get() function, except the return value is converted into a String.  Returns an empty string on error.
+
+
+
+Boolean db_used()
+Returns TRUE if the mailing list is located in a database, FALSE if located in a Recipient File or Recipient List.
+
+
+
+Boolean dbe_add_row(String connect, String table [, String column, AnyType value ...])
+Like the db_add_row() function, this function adds a row to a database table.  However, it does not use the database specified in the project.  Instead, a database connection string must be specified in the 'connect' parameter, and the name of a table in the 'table' parameter.  These two parameters can then be followed by any number of column/value pairs that will populate the new row.
+
+Example:
+[[dbe_add_row("DSN=MyDataSource;UID=MyUserName;PWD=MyPassword", "MyTable", "MyNumericColumn", 123, "MyStringColumn", "foo")]]
+
+This example adds a row to the table named "MyTable" in the Data Source named "MyDataSource".  The login will use the user name "MyUserName" and the password "MyPassword".  Two of the new row's columns are populated:  the numeric value 123 is stored in "MyNumericColumn" and the string value "foo" is stored in "MyStringColumn".
+
+Notes:
+· FALSE is returned if an error occurs, otherwise TRUE is returned.
+· If the connection string is empty, this will default to the one specified in the project.
+· Once the row has been added, it is NOT "acquired".  In other words, data cannot be read or written to the row using G-Merge.
+· The UID and PWD fields in the Connect String can be omitted if the database does not require a login.
+· According to our tests, most databases cannot add an empty row.  At least one column/value pair should be specified.
+· The project does not need to be using a database in order for this function to work.
+· To generate a connection string, open a new project, go to the Database branch, check Use Database and Use Connection String, click Browse, choose an ODBC driver, then complete the data source setup window.
+
+See also:
+db_add_row()
+db_add_row_table()
+
+
+AnyType dbe_call_func(String connect, String name [, AnyType param1 ...] )
+Calls a database stored function.  Unlike with db_call_func(), the stored procedure can be in a different database, which you must identify with a connection string in the first parameter.  'name' is the name of the function.  This can be followed by 0 or more function parameters.
+
+Notes:
+· The return value of db_call_func() is the same value that is returned by the stored function.
+· The operation will abort if any error occurs.
+· If the connection string is empty, this will default to the one specified in the project.
+
+Example:
+[[var foo = dbe_call_func("DSN=MyDataSource;UID=MyUserName;PWD=MyPassword", "myfunc", 4, "xyz", #11/19/2009#, TRUE)]]
+
+
+
+AnyType dbe_call_proc(String connect, String name [, AnyType param1 ...] )
+Calls a database stored procedure.  Unlike with db_call_proc(), the stored procedure can be in a different database, which you must identify with a connection string in the first parameter.  'name' is the name of the procedure.  This can be followed by 0 or more parameters.
+
+Notes:
+· The return value of db_call_proc() is the value in the first column of the first row of the result set returned by the stored procedure.  If the stored procedure does not invoke a SELECT statement, the return value is NULL.
+· The operation will abort if any error occurs.
+· If the connection string is empty, this will default to the one specified in the project.
+
+Example:
+[[var foo = dbe_call_proc("DSN=MyDataSource;UID=MyUserName;PWD=MyPassword", "myproc", 4, "xyz", #11/19/2009#, TRUE)]]
+
+
+
+Boolean dbe_execute(String connect, String sql [, String varname] )
+This function is identical to db_execute(), except that it does not operate on the database specified in the project.  The first parameter is a connection string for another database.  If the connection string is empty, this will default to the one specified in the project.
+
+If the 'varname' parameter is specified, the first column of the first record of the result set will be stored in this variable.  This variable name must be enclosed in quotes.
+
+The return value is TRUE if successful, FALSE if failed.
+
+Example:
+[[var foo = ""]]
+[[dbe_execute("DBQ=G:\DB\test.mdb;Driver={Microsoft Access Driver (*.mdb)};DriverId=25;FIL=MS Access;UID=admin;", "select foo from bar where tid=3", "foo")]]
+
+
+
+Void db2_close()
+Closes the secondary database that was opened by db2_execute().
+
+Calling this function is not required.  The database is closed automatically at the end of the Send/Incoming Operation, or if db2_execute() is called again.
+
+
+
+Boolean db2_execute(String connect, String sql)
+Opens a secondary database, and executes a SQL query.
+
+The database is specified by the 'connect' parameter.  This must be a standard ODBC connection string.  This does not have to be the same database that is specified in the project, although it can be.  To build a connection string, follow this procedure:
+
+1.  Create a new project.
+2.  Go to the Database branch.
+3.  Check the "Use Database" and "Use Connection String" boxes.
+4.  Click the Browse button to the right of the Connection String field.
+5.  Choose the appropriate ODBC driver for your database.
+6.  A data source setup window will appear.  Usually there is a "Select" button on the window.  Click this, and choose the database file from your hard drive.
+7.  Click OK.  The Connection String field will now be populated.  Copy and paste this string into the first parameter of db2_execute().  Don't forget to enclose it in quotes.
+
+The 'sql' parameter must contain the SQL query that is sent to the database.  Normally this is a SELECT statement.
+
+This function returns TRUE if successful, FALSE if failed.  If TRUE is returned, you may fetch a row from the result set by calling db2_fetch().  If it too returns TRUE, you may then fetch an individual column value with db2_get().  It is a good idea to call db2_close() after the query is processed.
+
+Following is an example that computes the total of a numeric column named 'bar' in a table named 'foo':
+
+[[var total = 0]]
+[[if db2_execute("DBQ=G:\DB\test.mdb;Driver={Microsoft Access Driver (*.mdb)};DriverId=25;FIL=MS Access;UID=admin;", "SELECT * FROM foo")]]
+  [[while db2_fetch()]]
+     [[let total += db2_get("bar")]]
+  [[endw]]
+  [[db2_close()]]
+[[endif]]
+
+Notes:
+· If the 'connect' parameter is an empty string, this function will operate on the database specified in the project.
+· This function establishes a secondary database connection that is completely independent of the query used to fetch the mailing list (during a Send Operation).  Only the db2_xxx() family of functions will affect the secondary database.  Functions like db_delete_row() do not affect the secondary database.
+· Calling db2_execute() will gracefully close any existing result set that was opened by a prior call to db2_execute().
+
+
+
+Boolean db2_fetch()
+Fetches a row of the result set from the secondary database that was opened by calling db2_execute().
+
+Returns TRUE if a result set was successfully fetched, FALSE otherwise.  If this returns TRUE, you may call db2_get() to obtain a value in an individual column.
+
+This is normally called in a WHILE loop to process every row of the result set.  See the example above.
+
+
+
+AnyType db2_get(String column_name)
+Retrieves a value from the current record in the result set from the secondary database that was opened by calling db2_execute().  The 'column_name' parameter must be a string containing the name of the column that is to be fetched.
+
+The return value is the value in the column.  The type of the return value will match the column's type.  Returns NULL if the column name was not found in the result set.
+
+Before calling this, you must call both db2_execute() and db2_fetch(), and both must return TRUE.  Call db2_fetch() again to advance to the next row of results.
+
+
+
+Boolean directory_create(String path)
+Creates a folder with the specified path.  Returns TRUE if successful, or if the folder already existed.
+
+Example	Result
+directory_create("c:\foo\bar")	TRUE
+
+
+Boolean directory_delete(String path)
+Deletes the folder with the specified path.  Returns TRUE if successful, or FALSE if the folder is not empty or doesn't exist.
+
+Example	Result
+directory_delete("c:\foo\bar")	TRUE
+
+
+Boolean directory_exists(String path)
+Returns true if the folder with the specified path exists.
+
+Example	Result
+directory_exists("c:\foo\bar")	TRUE
+
+
+Void disregard()
+During a Send Operation, this ignores the current recipient, effectively excluding them from the mailing.  The operation will continue with the next recipient in the mailing list.
+
+During an Incoming Operation, this ignores the current recipient being processed.  The operation will continue processing the next email address that is detected in the incoming email.
+
+When this is called in the Pre-Send Script or Pre-Incoming Script, the entire operation will abort.
+
+See also:
+nothing()
+return()
+stop()
+
+
+
+String dns_lookup_mx(String domain)
+This performs a DNS query for the MX record for the specified domain.  The MX record, which is the domain's SMTP server, is returned.  
+
+If you want the current recipient's domain, use the _domain predefined variable.
+
+Example	Result
+dns_lookup_mx("example.com")	smtp.example.com
+dns_lookup_mx(_domain)	mail.example2.com
+
+
+Boolean email_send(String from, String to, String body [, String headers] [, String attachment1] [, String attachment2] ... )
+Sends an email.  The "From:" header of the email will be the 'from' parameter.  The email will be sent to the address in the 'to' parameter.  The email will have the Text Body specified in the 'body' parameter.  The optional 'headers' parameter can be used to specify Custom Headers, such as a subject.  In addition, any number of attachments can optionally be specified with string parameters.  The first line of the string must be the attachment filename.
+
+The following example of a Post-Send Script demonstrates how to inform an administrator that the operation has completed.
+
+[[email_send("foo@bar.com", "abc@xyz.com", "The operation is finished.", "Subject: Operation Finished" + CR + "X-Foo: bar")]]
+
+
+Example, with an attachment:
+
+[[var report = "..."]]
+[[email_send("foo@bar.com", "abc@xyz.com", "The report is attached.", "", "report.txt" + CR + report)]]
+
+
+Example, with an attachment located in a file:
+
+[[email_send("foo@bar.com", "abc@xyz.com", "The report is attached.", "", "report.txt" + CR + file_fetch("c:\foo\bar.txt"))]]
+
+
+Notes:
+· The email is sent using the appropriate project settings, including Direct Delivery, Immediate Retry, EHLO Domain, etc.
+· While the email is being sent, the build thread will freeze.
+· Bounce backs are returned to the 'from' parameter.
+· The 'to' parameter can specify multiple email addresses, separated by commas, semi-colons, or newlines.
+· The email that is sent by this function is completely independent of the current email.  They will not affect each other.
+· Attachments are assumed to be plain text.  If unicode characters are present, the attachment will use 16-bit characters with a Byte Order Mark. Otherwise, the attachment will use 8-bit characters.
+
+
+
+String enbox(String s, Number type)
+Returns 's' enclosed in a box.  The appearance of the box is controlled by 'type' as follows:
+
+********
+* Type *
+*   0  *
+********
+	++++++++
++ Type +
++   1  +
+++++++++
+
+XXXXXXXX
+X Type X
+X   2  X
+XXXXXXXX
+	########
+# Type #
+#   3  #
+########
+????????
+? Type ?
+?   4  ?
+????????
+	!!!!!!!!
+! Type !
+!   5  !
+!!!!!!!!
+
+/------\
+| Type |
+|   6  |
+\------/
+	/XXXXXX\
+X Type X
+X   7  X
+\XXXXXX/
+
+O------O
+| Type |
+|   8  |
+O------O
+	--------
+[ Type ]
+[   9  ]
+--------
+
+========
+[ Type ]
+[  10  ]
+========
+	 ------ 
+< Type >
+<  11  >
+ ------ 
+
+
+Keep in mind that the box will not look right in a variable-pitch font.  Fortunately, virtually all email clients display the Text Body in a fixed-pitch font.
+
+
+String envvar(String s)
+Returns 's' with all DOS environment variables fully resolved.
+
+Notes:
+· For a full list of environment variables supported by your operating system, type "SET" into a command shell.
+· Environment variable names are not case sensitive.
+
+Example	Result
+envvar("%UserName%")	"George"
+
+
+Boolean equals_any(AnyType v, ...)
+Returns TRUE if the first parameter 'v' is identical to any other parameter.  Any number of parameters may be specified, and they may be of any data type.  When comparing strings, the comparison is case-sensitive.
+
+See also:
+equals_any_i()
+
+Example	Result
+equals_any("foo", "bar", "FOO")	FALSE
+equals_any("foo", "bar", "foo", "baz")	TRUE
+equals_any(45, 59, "45", "foo")	TRUE
+
+
+Boolean equals_any_i(AnyType v, ...)
+Returns TRUE if the first parameter 'v' is identical to any other parameter.  Any number of parameters may be specified, and they may be of any data type.  When comparing strings, the comparison is case-insensitive.
+
+See also:
+equals_any()
+
+Example	Result
+equals_any_i("foo", "bar", "baz")	FALSE
+equals_any_i("foo", "bar", "FOO", "baz")	TRUE
+equals_any_i(45, 59, "45", #9/23/2008#)	TRUE
+
+
+String extract_city(String csz)
+Returns just the city of 'csz', a city, state, and zip string.
+
+See also:
+extract_state()
+extract_zip()
+
+Example	Result
+extract_city("New York, NY 10101")	"New York"
+
+
+String extract_company(String email)
+Returns the company name portion of the compound email address in 'email'.  This only works if the company name follows the email address and is inside parenthesis.
+
+Example	Result
+extract_name("""John Doe"" <foo@bar.com> (Acme)")	"Acme"
+extract_name("Jack Doe <foo@bar.com> [Acme]")	""
+
+
+Date extract_date(AnyType dt)
+Returns just the date portion of the date and time in the 'dt' parameter (in effect, stripping away the time information).  'dt' can also be a string representation of a date and time.
+
+See Also:
+extract_time()
+
+Example	Result
+extract_date(#7/23/2000 13:45:59#)	#7/23/2000#
+extract_date("7-Feb-2008 1:45:59pm")	#2/7/2008#
+
+
+Number extract_day(Date d)
+Returns the day (1-31) of date 'd'.  Returns 0 if 'd' is not a valid date.  'd' can also be a string.
+
+See Also:
+extract_day_of_week()
+extract_month()
+extract_year()
+
+Example	Result
+extract_day(#7/23/2000#)	23
+extract_day("5/12/2003")	12
+
+
+Number extract_day_of_week(Date d)
+Returns the day of week (1-7, 1=Sunday) of date 'd'.  Returns 0 if 'd' is not a valid date.  'd' can also be a string.
+
+See Also:
+extract_day()
+extract_month()
+extract_year()
+
+Example	Result
+extract_day_of_week(#7/23/2000#)	1
+extract_day_of_week("12-May-2003")	2
+
+
+String extract_domain(String s)
+Returns the domain of the email address in 's'.
+
+See Also:
+extract_simple()
+Example	Result
+extract_domain("foo@bar.com")	"bar.com"
+
+
+String extract_filename(String url)
+Returns the filename portion of 'url', which can be a URL or filepath.
+
+Example	Result
+extract_filename("http://www.foo.com/bar.htm")	"bar.htm"
+extract_filename("https://www.foo.com/tar.htm?abc=6")	"tar.htm"
+extract_filename("ftp://user:password@www.foo.com:21/dog.txt")	"dog.txt"
+extract_filename("c:\foo\bar.htm")	"bar.htm"
+extract_filename("file:///c:\foo\abc.exe")	"abc.exe"
+extract_filename("file:///c:/example/foo.txt")	"foo.txt"
+extract_filename("foo\snurf.cfg")	"snurf.cfg"
+extract_filename("foo/glurn.ini")	"glurn.ini"
+
+
+String extract_first_name(String name)
+Returns the first name portion of the full name specified in the 'name' parameter.  If 'name' contains no spaces, the return value is the same as 'name'.
+
+See also:
+_first_name predefined variable
+extract_last_name()
+Example	Result
+extract_first_name("John Public")	"John"
+extract_first_name("foo")	"foo"
+
+
+Number extract_hours(Date d)
+Returns the military hour (0-23) of date 'd'.  Returns -1 if 'd' is not a valid date.  'd' can also be a string.
+
+See Also:
+extract_minutes()
+extract_seconds()
+
+Example	Result
+extract_hours(#4/8/99 15:17:57#)	15
+extract_hours("4:17:57p")	16
+
+
+String extract_last_name(String name)
+Returns the last name portion of the full name specified in the 'name' parameter.  If 'name' contains no spaces, the return value is the same as 'name'.
+
+See also:
+_last_name predefined variable
+extract_first_name()
+Example	Result
+extract_last_name("John Public")	"Public"
+extract_last_name("foo")	"foo"
+
+
+Number extract_minutes(Date d)
+Returns the minutes (0-59) of date 'd'.  Returns -1 if 'd' is not a valid date.  'd' can also be a string.
+
+See Also:
+extract_hours()
+extract_seconds()
+
+Example	Result
+extract_minutes(#4/8/99 15:17:57#)	17
+extract_minutes("3:12:57p")	12
+
+
+Number extract_month(Date d)
+Returns the month (1-12) of date 'd'.  Returns 0 if 'd' is not a valid date.  'd' can also be a string.
+
+See Also:
+extract_day()
+extract_year()
+
+Example	Result
+extract_month(#7/23/2000#)	7
+extract_month("9/23/2000")	9
+
+
+String extract_name(String s)
+Returns the name portion of the compound email address in 's'.
+
+Example	Result
+extract_name("""John Doe"" <foo@bar.com> (Acme)")	"John Doe"
+extract_name("'Jane Doe' <foo@bar.com> (Acme)")	"Jane Doe"
+extract_name("Jack Doe <foo@bar.com> (Acme)")	"Jack Doe"
+
+
+Number extract_seconds(Date d)
+Returns the seconds (0-59) of date 'd'.  Returns -1 if 'd' is not a valid date.  'd' can also be a string.
+
+See Also:
+extract_hours()
+extract_minutes()
+
+Example	Result
+extract_seconds(#3:17:57p#)	57
+extract_seconds("4/8/99 15:17:52")	52
+
+
+String extract_simple(String address)
+Returns the simple email address extracted from 'address'.  If 'address' contains a newline, everything thereafter is ignored.
+
+See Also:
+extract_domain()
+Example	Result
+extract_simple("Foo Bar <foo@bar.com>")	"foo@bar.com"
+
+
+String extract_state(String csz)
+Returns just the state of 'csz', a city, state, and zip string.
+
+See also:
+extract_city()
+extract_zip()
+
+Example	Result
+extract_state("New York, NY 10101")	"NY"
+
+
+Date extract_time(Date d)
+Returns just the time portion of the date/time parameter 'd'.  The parameter 'd can also be a string containing the ASCII representation of a date/time.
+
+See Also:
+extract_date()
+
+Example	Result
+extract_time(#8/29/2001 10:45:17#)	#10:45:17#
+extract_time("4.13.2001 14:15:37")	#14:15:37#
+
+
+String extract_url_field(String url, String field)
+Returns the value of the 'field' parameter that is encoded in 'url'.  The value returned is converted back from URL encoded form.
+
+See Also:
+convert_from_url()
+convert_to_url()
+
+Example	Result
+extract_url_field("http://foo.com?bar=123", "bar")	"123"
+extract_url_field("http://foo.com?bar=1%3D2", "bar")	"1=2"
+
+
+Number extract_year(Date d)
+Returns the 4-digit year of date 'd'.  Returns 0 if 'd' is not a valid date.  'd' can also be a string.
+
+See Also:
+extract_day()
+extract_month()
+
+Example	Result
+extract_year(#7/23/00#)	2000
+extract_year("7/23/1999")	1999
+
+
+Number extract_week_of_month(Date d)
+Returns the week of the month (1-6) in date 'd'.  Week #1 ends on the first Saturday, week #2 ends on the second Saturday, etc.  Returns 0 if 'd' is not a valid date.  'd' can also be a string.
+
+Example	Result
+extract_week_of_month(#5/6/07#)	2
+extract_week_of_month("11/9/2003")	3
+
+
+Number extract_week_of_year(Date d)
+Returns the week of the year (1-53) in date 'd'.  Week #1 ends on the first Saturday, week #2 ends on the second Saturday, etc.  Returns 0 if 'd' is not a valid date.  'd' can also be a string.
+
+Example	Result
+extract_week_of_year(#1/6/07#)	1
+extract_week_of_year("1/7/2007")	2
+
+
+String extract_zip(String csz)
+Returns just the zip code of 'csz', a city, state, and zip string.  This works with American and Canadian zip codes.
+
+See also:
+extract_city()
+extract_state()
+
+Example	Result
+extract_zip("New York, NY 10101")	"10101"
+extract_zip("Kelowna, BC V1X 1H9")	"V1X 1H9"
+
+
+Void fatal(String message)
+This function produces a "fatal error".  The parameter 'message' is displayed in a pop-up window, 'message' is written to the log, and the operation is aborted.
+
+Notes:
+· This function cannot be used with pseudo-projects since they do not support a user interface.
+
+
+
+Boolean field_exists(String name)
+Returns TRUE if 'name' is a valid variable or database column name.  Please note that the 'name' parameter must be a string containing the field's name, NOT the field name itself.
+
+Example:
+[[if field_exists("foo")]][[foo]][[endif]]
+
+
+
+Void file_append(String filepath, String s [, Number flags] )
+Appends the string 's' to the file specified by 'filepath'.
+
+The optional 'flags' parameter can be any sum of the following:
+
+Value	Description
+1	Unicode characters in 's' are supported.  If the file does not have the unicode Byte Order Mark, it will be converted to unicode before appending.  Without this flag, 's' can only contain 8-bit ASCII characters, and the file will be assumed to be 8-bit even if there is a Byte Order Mark.
+2	Don't ensure that there is a newline at the end of the file before appending.
+4	Don't create the file if it does not already exist.
+
+
+Example:
+[[file_append("c:\work\foo.txt", "Email sent to " + _recipient + " on " + _now + CR)]]
+
+Notes:
+· If the file does not already exist, it is created.
+· If the file does not end in a newline, one is appended before the string is appended, unless flag 2 is specified.
+· If the file is locked, file_append() will retry up to 10 times over a 1 second period.
+· If 'filepath' does not contain a complete path, it will be relative to the folder where Gammadyne Mailer is installed.
+
+
+
+String file_archive(String folder, String content, String prefix, String extension [, Number encoding] )
+Creates a new file with a sequential index.  'folder' is the path of the folder where the file will be created.  'content' is the contents of the new file.  'prefix' is the portion of the filename that appears before the 6-digit sequential index.  'extension' is the filename extension of the new file (without a period).
+
+The optional 'encoding' parameter determines how the file is encoded.  It can be one of the following:
+0   8-bit ASCII (the default if not specified)
+1   UTF-8
+2   UTF-8 with Byte Order Mark
+3   16-bit Unicode (little endian, UTF-16)
+4   16-bit Unicode (little endian, UTF-16, BOM)
+5   16-bit Unicode (big endian, UTF-16)
+6   16-bit Unicode (big endian, UTF-16, BOM)
+
+The filepath of the new file is returned.
+
+The following Incoming Script example archives the current email that is being processed to the "c:\emails" folder.
+
+[[if _first]]
+[[file_archive("c:\emails", _mime, "em", "msg", 2)]]
+[[endif]]
+
+In this example, the first file archive will be "c:\emails\em000001.msg", the second file archive will be "c:\emails\em000002.msg", etc.
+
+Notes:
+· If 'folder' does not already exist, it is created.
+· The file_archive() function employs synchronization so that multiple instances of Gammadyne Mailer can all be archiving files to the same folder without interfering with each other.
+· If 'folder' is a relative path, it will be relative to the folder where Gammadyne Mailer is installed.
+
+See Also:
+Archive Incoming Emails
+Archive Outgoing Emails
+Incoming Script Example #16 - Archiving Incoming Email
+Incoming Script Example #19 - Archiving Attachments
+Failure Script Example #8 - Archiving Failed Emails
+
+
+
+Boolean file_contains(String filepath, String s)
+Returns TRUE if the specified file contains the string 's'.  Returns FALSE otherwise, or if the file does not exist.  This is case sensitive.
+
+Example:
+[[if file_contains("c:\work\foo.txt", "some search string")]]
+...
+[[endif]]
+
+
+
+Boolean file_contains_i(String filepath, String s)
+Exactly the same as file_contains(), except that the search is not case sensitive.
+
+
+
+Boolean file_copy(String original_file, String new_file)
+Copies the file 'original_file' to 'new_file'.  Each of these parameters should specify a full drive, path, and filename.  If no path is specified, the folder where Gammadyne Mailer is installed will be used as a default.  If the filename is not changing, then 'new_file' does not need to specify the same filename.
+
+FALSE is returned if the copy failed.  Otherwise, TRUE is returned.
+
+Examples:
+[[file_copy("gm.log", "oldlog.log")]]
+[[file_copy("c:\Program Files (x86)\Gammadyne Mailer\gm.log", "oldlog.log")]]
+[[file_copy("c:\Program Files (x86)\Gammadyne Mailer\gm.log", "c:\oldlogs\")]]
+[[file_copy("c:\foo\bar.txt", "c:\bar\foo.txt")]]
+
+
+Void file_copy_m(String filespec, String target)
+Copies multiple files specified in the 'filespec' parameter to the folder specified in the 'target' parameter.  The 'filespec' parameter can list multiple files by separating them with semi-colons or carriage returns, and supports the ? and * wildcards.
+
+Notes:
+· If the file specification contains no path, the folder where Gammadyne Mailer is installed will be used as a default.
+· The operation will proceed even if there is an error in the file specification (such as a missing file).
+· If there is an error copying a file, this will not stop subsequent files from being copied.
+· A backslash at the end of the 'target' parameter is optional.
+· Any target file that already exists will be overwritten.
+· If the target folder doesn't exist, the operation will fail.
+
+Examples:
+[[file_copy_m("c:\foo\*.log", "d:\oldlogs\")]]
+[[file_copy_m("c:\foo\*.log" + CR + "c:\bar\foo??.txt", "d:\baz")]]
+
+
+
+Date file_date_get(String filepath)
+Returns the date and time when the specified file was last modified.  Returns NULL if the file does not exist.  If 'filepath' does not contain a complete path, it will be relative to the folder where Gammadyne Mailer is installed.
+
+The following example inserts the modified date of the file "c:\foo\bar.txt" into the email body:
+
+[[var fn = "c:\foo\bar.txt"]]
+File: [[fn]]
+Date: [[date_format(file_date_get(fn), "yy/mm/dd HH:ii:ss")]]
+
+
+
+Boolean file_delete(String filepath)
+Deletes the specified file.  Returns TRUE if successful, FALSE otherwise.
+
+If 'filepath' does not contain a complete path, it will be relative to the folder where Gammadyne Mailer is installed.
+
+
+Void file_delete_m(String filespec)
+Deletes multiple files specified in the 'filespec' parameter.  The 'filespec' parameter can list multiple files by separating them with semi-colons or carriage returns, and supports the ? and * wildcards.
+
+Example:
+[[file_delete_m("c:\foo\*.log;*.tmp")]]
+
+Notes:
+· If 'filespec' does not contain a complete path, it will be relative to the folder where Gammadyne Mailer is installed.
+· The operation will proceed even if there is an error in the file specification (such as a missing file).
+· If there is an error deleting a file, this will not stop subsequent files from being deleted.
+
+
+
+Boolean file_exists(String filepath)
+Returns TRUE if the specified file exists, FALSE otherwise.
+
+If 'filepath' does not contain a complete path, it will be relative to the folder where Gammadyne Mailer is installed.
+
+ 
+String file_fetch(String filepath)
+Returns the entire file as a string.  Returns an empty string if the file does not exist.  If 'filepath' does not contain a complete path, it will be relative to the folder where Gammadyne Mailer is installed.
+
+Following is an example that inserts the file "c:\foo\bar.txt" into the email body:
+
+[[file_fetch("c:\foo\bar.txt")]]
+
+Following is an example that loads the same file into a string variable, modifies it, then inserts it into the email body:
+
+[[var s = file_fetch("c:\foo\bar.txt")]]
+[[let s = s + CR + "The End."]]
+[[s]]
+
+Notes:
+· If the file has a Byte Order Mark present, the returned string will be in unicode.  Otherwise the file is assumed to be 8-bit ASCII.
+· G-Merge is not processed in the contents of the file before it is inserted into the body.  To do this, use the include() function instead.
+
+
+
+String file_fetch_line(String filepath [, Number line_number] )
+Returns a single line from a file.  The first parameter is the filepath of the file.  If 'filepath' does not contain a complete path, it will be relative to the folder where Gammadyne Mailer is installed.
+
+The second parameter is the 0-based line number.  Returns an empty string if the line number is invalid, or if the file does not exist.  If this parameter is omitted, a random line is returned.
+
+Example #1: the second line from a file.
+
+[[file_fetch_line("c:\foo\bar.txt", 1)]]
+
+
+Example #2: a random line from a file.
+
+[[file_fetch_line("c:\foo\bar.txt")]]
+
+
+
+String file_find_first(String filter)
+Returns the filepath of the first file that matches the specified filter.  Use the file_find_next() function to retrieve the filepaths of additional files that match the filter.  An empty string is returned if no files match the filter.
+
+The filter is a filepath that usually contains a "?" or "*" wildcard.  Following are some examples.
+
+Filter	Description
+c:\foo\*.*	All files is the folder "c:\foo"
+c:\foo\*.txt	All files is the folder "c:\foo" with the extension "txt".
+c:\foo\?.*	All files is the folder "c:\foo" with a single character for a filename
+
+
+
+String file_find_next()
+After calling file_find_first(), this function is called to obtain the filepath of the next file that matches the original filter.  An empty string is returned if no more files match the filter.
+
+The following example creates a string ('s') that contains all of the text in all of the .txt files in the folder "c:\foo".
+
+[[var s = ""]]
+[[var filepath = file_find_first("c:\foo\*.txt")]]
+[[while filepath != ""]]
+  [[let s += file_fetch(filepath)]]
+  [[let filepath = file_find_next()]]
+[[endw]]
+
+
+ 
+Boolean file_move(String old_file, String new_file)
+Moves the file 'old_file' to 'new_file'.  Each of these parameters should specify a full drive, path, and filename.  If no path is specified, the folder where Gammadyne Mailer is installed will be used as a default.  If the filename is not changing, then 'new_file' does not need to specify the same filename.  If the path is the same in the two parameters, this has the effect of renaming the file.
+
+FALSE is returned if the move failed.  Otherwise, TRUE is returned.
+
+Examples:
+[[file_move("gm.log", "oldlog.log")]]
+[[file_move("c:\Program Files (x86)\Gammadyne Mailer\gm.log", "oldlog.log")]]
+[[file_move("c:\Program Files (x86)\Gammadyne Mailer\gm.log", "c:\oldlogs")]]
+[[file_move("c:\foo\bar.txt", "c:\bar\foo.txt")]]
+
+
+Void file_move_m(String filespec, String target)
+Moves multiple files specified in the 'filespec' parameter to the folder specified by the 'target' parameter.  The 'filespec' parameter can list multiple files by separating them with semi-colons or carriage returns, and supports the ? and * wildcards.
+
+Notes:
+· If the file specification contains no path, the folder where Gammadyne Mailer is installed will be used as a default.
+· The operation will proceed even if there is an error in the file specification (such as a missing file).
+· If there is an error moving a file, this will not stop subsequent files from being moved.
+· A backslash at the end of the 'target' parameter is optional.
+· Any target file that already exists is overwritten.
+· If the target folder doesn't exist, the operation fails.
+
+Examples:
+[[file_move_m("c:\foo\*.log", "d:\oldlogs\")]]
+[[file_move_m("c:\foo\*.log" + CR + "c:\bar\foo??.txt", "d:\baz")]]
+
+
+
+Number file_run(String command_line)
+Executes a program using a DOS command line.  The first item on the command line must be the filepath of the program, enclosed in quotes if it contains spaces.  Additional parameters to the program can follow the filepath.
+
+Unlike the file_start() function, the file_run() function will wait for the program to finish before returning.  The return value is the exit status of the program (which can be anything, depending on the program).  If the program does not exist or cannot be executed, the return value is -2147483648.
+
+Here is an example of a DOS command line:
+
+"c:\foo\bar.exe" 42 "foobar"
+
+Now here is an example of the file_run() function in action:
+
+[[file_run("""c:\foo\bar.exe"" 42 ""foobar""")]]
+
+Note how the double quotes are used to represent a single quote in the string literal, and not the end of the string itself.
+
+Multiple command lines are allowed, separated by newlines.  For example:
+
+[[file_run("c:\foo\bar.exe" + CR + "c:\foo\baz.exe")]]
+
+
+
+Boolean file_save(String filepath, String data [, Number flags] )
+Stores 'data' to 'filepath'.  If the file does not exist, it is created, otherwise its contents are overwritten.  Returns FALSE if an error occurs, TRUE otherwise.
+
+If 'filepath' does not contain a complete path, it will be relative to the folder where Gammadyne Mailer is installed.
+
+The optional 'flags' parameter can be any sum of the following:
+
+Value	Description
+1	'data' contains 16-bit unicode characters instead of 8-bit ASCII.
+2	Don't put a Byte Order Mark at the beginning of the file (only relevant if flag 1 is specified).
+
+Here is an example that saves the variable "baz" to the file "c:\foo\bar.txt":
+
+[[file_save("c:\foo\bar.txt", baz, 0)]]
+
+
+String file_save_temp(String data)
+Creates a new, temporary file and fills it with 'data'.  The file will be located in the operating system's temporary folder, and will have a .TMP extension.  The filepath of the temporary file is returned.
+
+Example:
+[[var filepath = file_save_temp("Hello World")]]
+
+
+Boolean file_start(String command_line)
+Executes a program using a DOS command line.  The first item on the command line must be the filepath of the program, enclosed in quotes if it contains spaces.  Additional parameters to the program can follow the filepath.
+
+Unlike the file_run() function, the file_start() function does not wait for the program to finish before returning.  The return value is TRUE if the program was successfully started.  If the program does not exist or cannot be executed, the return value is FALSE.
+
+If 'command_line' is a URL, the URL will be opened in the system's default web browser.
+
+Here is an example of a DOS command line:
+
+"c:\foo\bar.exe" 42 "foobar"
+
+Now here is an example of the file_start() function in action:
+
+[[file_start("""c:\foo\bar.exe"" 42 ""foobar""")]]
+
+Note how the double quotes are used to represent a single quote in the string literal, and not the end of the string itself.
+
+Multiple command lines are allowed, separated by newlines.  For example:
+
+[[file_start("c:\foo\bar.exe" + CR + "c:\foo\baz.exe")]]
+
+This final example opens the default program that is associated with a document:
+
+[[file_start("start c:\example\foo.pdf")]]
+
+
+
+String gmerge(String s)
+Returns the result of processing G-Merge statements in 's'.
+
+Notes:
+· The G-Merge script that is processed will have access to all variables in the parent script.  Any changes made to a variable are reflected in the parent script.
+· If an error occurs in the G-Merge script, the information about the position of the error will be lost.  The caret will be positioned at the end of the gmerge() function call.
+· To process G-Merge in a file, please refer to the include() function.
+
+Example	Result
+gmerge("yep")	"yep"
+gmerge("ab[[""cd"" + ""ef""]]gh")	"abcdefgh"
+
+
+String hash_md5(String s)
+Returns the MD5 hash of 's' in hexadecimal digits.
+
+Note: for legacy compatibility, the hash is calculated on the narrow 8-bit character representation of 's'.
+
+Example	Result
+hash_md5("abc")	"900150983cd24fb0d6963f7d28e17f72"
+hash_md5("abcdefghijklmnopqrstuvwxyz")	"c3fcd3d76192e4007dfb496cca67e13b"
+
+ 
+String hash_sha1(String s)
+Returns the SHA-1 hash of 's' in hexadecimal digits.
+
+Note: for legacy compatibility, the hash is calculated on the narrow 8-bit character representation of 's'.
+Example	Result
+hash_sha1("")	"da39a3ee5e6b4b0d3255bfef95601890afd80709"
+hash_sha1("The quick brown fox jumps over the lazy dog")	"2fd4e1c67a2d28fced849ee1bb76e7391b93eb12"
+
+ 
+String hash_sha256(String s)
+Returns the SHA-256 hash of 's' in hexadecimal digits.
+
+Note: for legacy compatibility, the hash is calculated on the narrow 8-bit character representation of 's'.
+Example	Result
+hash_sha256("")	"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+hash_sha256("The quick brown fox jumps over the lazy dog")	"d7a8fbb307d7809469ca9abcb0082e4f8d5651e46d3cdb762d02d0bf37c9e592"
+
+ 
+String header_to_html(String header)
+This returns 'header' decoded from MIME header encoding, then re-encoded for HTML.  All problematic characters, including <>& and all non-ASCII, are made safe for HTML.
+
+Example	Result
+header_to_html("foo")	"foo"
+header_to_html("<foo@bar.com>")	"&lt;foo@bar.com&gt;"
+header_to_html("""=?utf-8?B?xKzFpCDFtMeRxZTEts6W?="" <foo@bar.com>")	"&quot;&#300;&#356; &#372;&#465;&#340;&#310;&#918;&quot; &lt;foo@bar.com&gt;"
+
+ 
+String html_from_text(String text [, Number flags] )
+This converts the text in the 'text' parameter to HTML code.  The HTML code is returned.  The conversion involves the following:
+
+· Special characters are encoded ('<' is converted to '&lt;').
+· Non-ASCII characters are encoded ('©' is converted to '&copy;').
+· Web addresses and email addresses are converted into a functioning hyperlink.
+· Newlines are converted to '<br>'.
+· Leading spaces on a line are converted to '&nbsp;'.
+· When a space is followed by a space, it is converted to '&nbsp;'.
+
+The optional 'flags' parameter can be any sum of the following:
+
+Value	Description
+1	Do not make URL's into functioning hyperlinks.
+2	Do not make email addresses into functioning hyperlinks.
+4	Wrap the result in <pre>...</pre> tags.  Word wrap will not function.
+8	Wrap the result in <pre>...</pre> tags.  The "white-space: pre-wrap" style is specified so that word wrap will function.
+16	Wrap the result with a <div>.
+32	Wrap the result in a monospace <div>.
+64	Hyperlinks should open in a different window/tab.
+
+Because this function produces HTML code, you must use the "raw" directive.
+
+See Also:
+convert_to_html()
+convert_html_to_text()
+html_neutralize()
+mime_convert_to_html()
+
+Example	Result
+html_from_text("foo")	"foo"
+html_from_text("foo<>bar")	"foo&lt;&gt;bar"
+html_from_text("foo©bar")	"foo&copy;bar"
+html_from_text("http://foo.com")	"<a href="http://foo.com">http://foo.com</a>"
+html_from_text("http://foo.com", 1)	"http://foo.com"
+html_from_text("foo@bar.com")	"<a href="mailto:foo@bar.com">foo@bar.com</a>"
+html_from_text(" foo " + CR + "  b ar")	"&nbsp;foo <br>
+&nbsp;&nbsp;b ar"
+html_from_text("foo   a b")	"foo&nbsp;&nbsp; a b"
+
+
+String html_neutralize(String s)
+Encodes all non-ASCII characters in 's' for HTML, and returns the result.  Normally html_neutralize() is called in the HTML Body and uses the "raw" directive, like this:
+
+[[raw html_neutralize(name)]]
+
+Notes:
+· It is not necessary to call html_neutralize() when merging data into the HTML body.  That is done automatically so long as Canonicalize G-Merge Output is checked.
+· This does not encode the <>& characters.  For that, use convert_to_html() instead.
+· This does not generate any HTML tags, such as converting newlines to <br>.  For that, use html_from_text() instead.
+
+See Also:
+convert_to_html()
+html_from_text()
+
+
+
+String http_fetch(String url [, String headers] )
+Returns a page from the Internet specified in 'url'.  The "http://" prefix is optional.  This sample HTML Body fetches Gammadyne's home page:
+ 
+<html>
+<body>
+This is Gammadyne's home page:<br>
+<br>
+[[http_fetch("www.gammadyne.com/default.htm")]]
+</body>
+</html>
+
+An optional second parameter, 'headers', can be specified.  This is used to send extra HTTP headers along with the HTTP request.  See RFC-2068 for details on HTTP headers.  Please note that the 'headers' parameter must end in a newline.  Following is an example:
+
+[[http_fetch("www.gammadyne.com/default.htm", "If-Unmodified-Since: Sat, 29 Oct 1994 19:43:31 GMT" + CR)]]
+
+
+Notes:
+· Whitespace and quotes are ignored on both ends of the URL.
+· In this particular example, the "Canonicalize G-Merge Output" box on the HTML Body/Options branch should be unchecked.
+· In the first example, the result is going to be an HTML Body with two sets of <html> and <body> tags.  Although not technically correct, most email clients will have no trouble ignoring the duplicate tags.
+· HTTP over SSL is supported.  However, for this to work, the URL must begin with the "https://" prefix.
+
+
+
+String http_post(String url, String field_name1, String field_value1, ... )
+Performs an HTTP POST.  The first parameter is the URL to which the data should be posted.  The "http://" prefix is optional.  This parameter can be followed by any number of fields.  A field is a pair of parameters, the first being the field name, the second being the field value.
+
+Following is an example:
+
+[[http_post("www.example.com/my_form.php", "Name", "Bob", "Email", "bob@gmail.com")]]
+
+
+Notes:
+· Whitespace and quotes are ignored on both ends of the URL.
+· HTTP over SSL is supported.  However, for this to work, the URL must begin with the "https://" prefix.
+
+
+
+String include(String filename)
+
+Returns the contents of the file named in the 'filename' parameter after G-Merge statements have been processed within the file.
+
+For example, consider a file named "c:\foo\bar.txt" with the following contents:
+
+abc[["def"]]ghi
+
+After including this file with the following G-Merge statement:
+
+[[var s = include("c:\foo\bar.txt")]]
+
+The value in the variable 's' will be:
+
+abcdefghi
+
+Note: the file must be plain text, like those produced by Notepad.  The characters can be 8-bit ASCII or 16-bit unicode (if a Byte Order Mark is present).
+
+See Also:
+gmerge() - processes G-Merge in a string variable instead of a file.
+file_fetch() - same as include() but without processing G-Merge.
+
+
+
+Boolean imap_move(String folder_name)
+Moves the current incoming email into a folder (on the mail server) that is named in the 'folder_name' parameter.  This function only works on IMAP4 servers (POP3 servers only have one folder, the inbox).  This function can only be called in the Incoming Script.  Returns TRUE if the move was successful.
+
+
+
+Void incoming_autorespond()
+Sends an Auto-Response email to the recipient who was processed in an incoming email.  This function behaves the same as checking the "Auto-Respond" box.  The advantage to using this function is that it can be placed inside an "if" statement.
+
+The Auto-Response is sent to the email address in the _recipient predefined variable.  By default, this is the email address of the recipient who was processed, although a different email address can be assigned to this variable with a "let" statement.
+
+Notes:
+· This function will obey all auto-responder settings on the Remailing branch.
+· For an example of using the incoming_autorespond() function, see Incoming Script Example #10.
+· If the auto-response is sent successfully, the Success Script will execute.  If it fails, the Failure Script will execute.
+
+
+
+Void incoming_delete(Boolean delete)
+This controls whether or not an incoming email is deleted or not.  If 'delete' is TRUE, the incoming email is deleted from the server.  If 'delete' is FALSE, the incoming email is left on the server.
+
+This function overrides the behavior of the Delete Emails option.  This function can only be used in the Incoming Script.
+
+Following is an example that deletes and otherwise ignores soft-bounces.  It will also stop the script's execution so that you can do other processing to other types of emails.
+
+[[if incoming_is_soft_bounce()]]
+    [[incoming_delete(TRUE)]]
+    [[disregard()]]
+[[endif]]
+
+
+Following is an example that will detect if the keyword "REMOVE" is in the subject.  If so, it will remove the recipient from the mailing list and delete the email.
+
+[[if str_contains_i(_subject, "REMOVE")]]
+    [[db_delete_recipient(_email)]]
+    [[incoming_delete(TRUE)]]
+    [[disregard()]]
+[[endif]]
+
+
+
+Boolean incoming_forward(String address [, String subject] )
+Forwards the current incoming email to the email address in 'address'.  This function behaves the same as using the "Forward Emails" feature.  The advantage to using this function is that it can be placed inside an "if" statement within the Incoming Script.
+
+If specified, the subject of the forwarded email is set to the optional 'subject' parameter.
+
+Notes:
+· This function returns TRUE if the forward was successfully sent, FALSE otherwise.
+· If the forward bounces, the bounce-back is sent to the "Sender" field.  When using Indirect Delivery, the Sender must be an authorized user on the local SMTP Server.
+· If the "Forward As Raw MIME" box is checked, the "From:" email header of the forwarded email is the sender of the incoming email.  This can be overridden by assigning a different value to the _from predefined variable.
+· If the "Forward As Raw MIME" box is checked, the body of the forwarded email will contain the contents of the incoming email, including its headers, in MIME format.
+· The body of the forwarded email can be altered by assigning a different value to the _mime predefined variable in the Incoming Script.  The mime_xxx() functions can manipulate the _mime variable.
+· This function is also influenced by the "Change 'To' Header", "Censor Forwards", "Change 'From' Header", "Change 'Reply-To' Header", and Convert Forwards To Text settings.
+· Forwarding to multiple recipients is permitted.  Simply list each email address in the first parameter, separated with a comma.
+· If the "Log Entire 'Forward' Operation" box is checked, the entire Send Log of the forwarding operation is written to the Incoming Log.
+
+Example #1:
+[[incoming_forward("foo@bar.com")]]
+
+Example #2:
+[[mime_text_append(_mime, CR + "Forwarded by Gammadyne Mailer")]]
+[[incoming_forward("foo@example.com, bar@example.com")]]
+
+Example #3:
+[[if !incoming_is_bounce() and !incoming_is_autoresponse()]]
+[[incoming_forward("foo@bar.com")]]
+[[endif]]
+
+See also:
+Incoming Script Example #18 - Round-Robin Forwarding
+
+
+
+Void incoming_forward_to_all()
+Forwards the current incoming email to all recipients specified in the project.  This performs the exact same operation as the "Forward to all recipients" Processing Mode.  The advantage to using this function is that it can be placed inside an "if" statement within the Incoming Script.
+
+Notes:
+· This function can only be called from the Incoming Script.
+· The body of the forwarded email can be altered by assigning a different value to the _mime predefined variable in the Incoming Script.  The mime_change_header() and mime_strip_attachments() functions can be used to modify the _mime variable.
+· This function is influenced by the Change 'To' Header, "Censor Forwards", "Change 'From' Header", "Change 'Reply-To' Header", Convert Forwards To Text, and "Log entire 'Forward to all' operation" settings.
+
+Example:
+[[mime_change_header(_mime, "To", "Acme Widgets Discussion Forum")]]
+[[mime_strip_attachments(_mime)]]
+[[mime_html_append(_mime, "<br><p>your footer here</p>")]]
+[[mime_delete_headers(_mime, "Received", "Message-ID", "Disposition-Notification-To", "Read-Receipt-To", "Delivery-Receipt-To", "Return-Receipt-Requested", "Return-Receipt-To", "Registered-Mail-Reply-Requested-By")]]
+[[incoming_forward_to_all()]]
+
+See also:
+List-Server Setup
+List-Serving Wizard
+
+
+
+String incoming_get_body()
+This returns the current incoming email's HTML body, stripped of HTML tags and decoded.  If there is no HTML body present, this returns the text body.
+
+This function can only be called from the Incoming Script.
+
+See also:
+_body
+incoming_get_html()
+incoming_get_text()
+
+
+
+String incoming_get_bounce()
+If the current incoming email is a bounce-back, this function returns the first email address that follows the bounce-back keyword.  Otherwise, an empty string is returned.
+
+Notes:
+· To determine whether or not the incoming email is a bounce-back, Gammadyne Mailer will look in the incoming email's body for the presence of any of the keywords listed in the "Bounce Strings.txt" and "Soft Bounces.txt" files.  These files are located in the folder where Gammadyne Mailer is installed.  Keywords can be added to these files.  Installing new versions of Gammadyne Mailer will not replace these files unless they are manually deleted first.
+· This function can only be called from the Incoming Script.
+· The email address will be converted to lower case.
+
+See Also:
+Hard Bounces
+Soft Bounces
+incoming_is_bounce()
+incoming_is_hard_bounce()
+incoming_is_soft_bounce()
+
+
+
+Date incoming_get_date()
+Returns the date/time that the incoming email claims it was sent.  This is taken from the Date: header.  The returned time is converted to the local time zone.
+
+See Also:
+incoming_get_header()
+incoming_get_received()
+mime_get_header()
+
+
+
+String incoming_get_header(String header)
+Returns the value of the incoming email's header field, identified by the only parameter, 'header'.  For example, incoming_get_header("Reply-To") will return the incoming email's reply address.
+
+Notes:
+· If the header is not present in the incoming email, an empty string is returned.
+· Header field names are not case sensitive.
+· There must not be a colon at the end of the 'header' parameter.
+· If the header occupied more than one line, it is converted to one line.
+· If the header occurred multiple times in the incoming email, all of them are returned, each on a separate line.
+· All MIME header encoding will be decoded.
+
+See Also:
+convert_from_header()
+incoming_get_date()
+incoming_get_ip()
+mime_get_header()
+
+
+
+String incoming_get_html()
+This returns the current incoming email's HTML body, in its raw HTML form.
+
+Notes:
+· If there is no HTML body present, this returns an empty string.
+· The returned string is fully decoded from its MIME encoding (e.g. Quoted-Printable).  However, character set (e.g. "UTF-8") and HTML encodings (e.g. "&nbsp;") are not decoded.
+· This function can only be called from the Incoming Script.
+
+See also:
+incoming_get_body()
+incoming_get_text()
+
+
+
+String incoming_get_ip()
+Returns the IP address of the sender of the current incoming email.  This information is extracted from the last "Received:" header field.
+
+For example, consider an incoming email with the following "Received:" header fields:
+
+Received: from foo.net (foo.net [198.36.160.2])
+by ns.gammadyne.com (8.9.3/8.9.3) with SMTP id SAA31605
+for <support@gammadyne.com>; Wed, 15 Aug 2001 18:05:59 -0400
+Received: from bar.net (63.230.172.244)
+by bar.net with SMTP; 15 Aug 2001 21:50:36 -0000
+
+In this example, incoming_get_ip() will return "63.230.172.244".  Notice that the first IP address is ignored.
+
+
+Date incoming_get_received()
+Returns the date extracted from the oldest "Received:" header of the current incoming email.  This is the date when the email was delivered to the first SMTP server.  If a time zone bias is specified, the date/time is converted to local time.
+
+For example, consider an incoming email with the following "Received:" header fields:
+
+Received: from foo.net (foo.net [198.36.160.2])
+by ns.gammadyne.com (8.9.3/8.9.3) with SMTP id SAA31605
+for <support@gammadyne.com>; Wed, 15 Aug 2001 23:55:59 -0400
+Received: from bar.net (63.230.172.244)
+by bar.net with SMTP; 16 Aug 2001 00:02:36 -0600
+
+In this example, incoming_get_received() will return #8/16/2001 01:02:36# assuming the local time zone bias is -0500.  Notice that the first Received header is ignored.
+
+See Also:
+incoming_get_date()
+
+
+
+String incoming_get_text()
+This returns the current incoming email's text body.
+
+Notes:
+· If there is no text body present, this returns an empty string.
+· The returned string is fully decoded from MIME (e.g. Quoted-Printable) and character set (e.g. UTF-8).
+· This function can only be called from the Incoming Script.
+
+See also:
+incoming_get_body()
+incoming_get_html()
+
+
+
+Boolean incoming_is_autoresponse()
+Returns TRUE if the current incoming email was generated automatically by an email program or auto-responder.
+
+Notes:
+· An email is considered an auto-response if it contains an "Auto-Submitted:" header, unless the header value is "no".
+· To comply with RFC-3834 section 2, you should never send an auto-response to an email if incoming_is_autoresponse() returns TRUE.
+· Please note that some bounce-backs do contain an "Auto-Submitted" header.  Therefore, it may be wise to call incoming_is_bounce() first.
+· This function can only be called from the Incoming Script.
+· Incoming auto-responses can be automatically ignored or deleted using the Auto-Responses setting.
+
+The following example of an Incoming Script demonstrates how to ignore and delete all auto-responses.
+
+[[if incoming_is_autoresponse()]]
+  [[incoming_delete(TRUE)]]
+  [[disregard()]]
+[[endif]]
+
+See Also:
+incoming_is_bounce()
+incoming_is_disposition()
+incoming_is_hard_bounce()
+incoming_is_ooo()
+incoming_is_soft_bounce()
+
+
+
+Boolean incoming_is_bounce()
+Returns TRUE if the current incoming email is a bounce-back (either hard or soft).  This function can only be called from the Incoming Script.
+
+To determine whether or not the incoming email is a bounce back, Gammadyne Mailer will look in the incoming email's body for the presence of any of the keywords listed in the "Bounce Strings.txt" and "Soft Bounce.txt" files.  These files are located in the folder where Gammadyne Mailer is installed.  Keywords can be added to these files.  Installing new versions of Gammadyne Mailer will not replace this file unless it is manually deleted first.
+
+The following example of an Incoming Script demonstrates how to ignore and delete all bounce-backs.
+
+[[if incoming_is_bounce()]]
+  [[incoming_delete(TRUE)]]
+  [[disregard()]]
+[[endif]]
+
+See Also:
+incoming_get_bounce()
+incoming_is_autoresponse()
+incoming_is_disposition()
+incoming_is_hard_bounce()
+incoming_is_ooo()
+incoming_is_soft_bounce()
+
+
+
+Boolean incoming_is_disposition()
+Returns TRUE if the current incoming email is a "Disposition Notification" (a.k.a. Delivery Status Notification).  This function can only be called from the Incoming Script.
+
+An email is considered a Disposition Notification if its Content-Type header is "multipart/report" and the Content-Type's "report-type" field is "disposition-notification".  See RFC-2298 for details.
+
+Disposition Notifications are sometimes sent when an email is received with a "Disposition-Notification-To" header.  This corresponds to the "Delivery Status Notification" option.  However, most recipients will not send the notification.
+
+The following example of an Incoming Script demonstrates how to ignore and delete all disposition notifications.
+
+[[if incoming_is_disposition()]]
+  [[incoming_delete(TRUE)]]
+  [[disregard()]]
+[[endif]]
+
+See Also:
+incoming_is_autoresponse()
+incoming_is_bounce()
+incoming_is_hard_bounce()
+incoming_is_ooo()
+incoming_is_soft_bounce()
+
+
+
+Boolean incoming_is_ooo()
+Returns TRUE if the current incoming email is an "Out of Office" auto-reply.
+
+Unfortunately, there is no perfect way to determine whether or not an email is an "Out of Office" auto-reply.  Gammadyne Mailer must look in the subject and body for the presence of any of the keywords listed in the "OOO Strings.txt" file.  This file is located in the folder where Gammadyne Mailer is installed.  Keywords can be added to this file.  Installing new versions of Gammadyne Mailer will not replace this file unless it is manually deleted first.
+
+Example:  Ignoring and deleting "Out of Office" auto-replies.
+
+[[if incoming_is_ooo()]]
+  [[incoming_delete(TRUE)]]
+  [[disregard()]]
+[[endif]]
+
+See Also:
+incoming_is_autoresponse()
+incoming_is_bounce()
+incoming_is_disposition()
+incoming_is_hard_bounce()
+incoming_is_soft_bounce()
+
+
+
+Boolean incoming_is_hard_bounce()
+Returns TRUE if the current incoming email is a "hard" bounce-back.  A hard bounce-back indicates that there is a permanent problem with delivery, such as when the mailbox does not exist.  It is a good idea to remove hard bounces from the mailing list because sending many undeliverables can cause blacklisting.
+
+Unfortunately, there is no perfect way to determine whether or not an email is a hard bounce-back.  Mail servers do not adhere to any kind of standard bounce-back format.  To determine whether or not an email is a hard bounce, Gammadyne Mailer will look in the body for the presence of any of the keywords listed in the "Bounce Strings.txt" file.  This file is located in the folder where Gammadyne Mailer is installed.  Keywords can be added to this file.  Installing new versions of Gammadyne Mailer will not replace this file unless it is manually deleted first.
+
+Example #1:  Ignoring hard bounces.
+
+[[if incoming_is_hard_bounce()]]
+  [[disregard()]]
+[[endif]]
+
+
+Example #2:  Ignoring and deleting hard bounces.
+
+[[if incoming_is_hard_bounce()]]
+  [[incoming_delete(TRUE)]]
+  [[disregard()]]
+[[endif]]
+
+
+Example #3: Removing the recipient from the mailing list.
+
+[[if incoming_is_hard_bounce()]]
+  [[remove_recipients(_email)]]
+  [[incoming_delete(TRUE)]]
+  [[disregard()]]
+[[endif]]
+
+
+Notes:
+· This function always returns FALSE if incoming_is_soft_bounce() returns TRUE.
+· This function can only be called from the Incoming Script.
+
+See Also:
+incoming_get_bounce()
+incoming_is_autoresponse()
+incoming_is_bounce()
+incoming_is_disposition()
+incoming_is_ooo()
+incoming_is_soft_bounce()
+
+
+
+Boolean incoming_is_soft_bounce()
+Returns TRUE if the current incoming email is a "soft" bounce-back.  A soft bounce-back indicates that the mailbox does exist, but can't receive email right now (usually because the mailbox is full).  Delivery may still be possible in the future.
+
+Unfortunately, there is no perfect way to determine whether or not an email is a soft bounce-back.  Mail servers do not adhere to any kind of standard bounce-back format.  To determine whether or not an email is a soft bounce, Gammadyne Mailer will look in the body for the presence of any of the keywords listed in the "Soft Bounce.txt" file.  This file is located in the folder where Gammadyne Mailer is installed.  Keywords can be added to this file.  Installing new versions of Gammadyne Mailer will not replace this file unless it is manually deleted first.
+
+
+Example #1:  Ignoring soft bounces.
+
+[[if incoming_is_soft_bounce()]]
+  [[disregard()]]
+[[endif]]
+
+
+Example #2:  Ignoring and deleting soft bounces.
+
+[[if incoming_is_soft_bounce()]]
+  [[incoming_delete(TRUE)]]
+  [[disregard()]]
+[[endif]]
+
+
+Notes:
+· This function can only be called from the Incoming Script.
+
+See Also:
+incoming_get_bounce()
+incoming_is_autoresponse()
+incoming_is_bounce()
+incoming_is_disposition()
+incoming_is_hard_bounce()
+incoming_is_ooo()
+
+
+
+Number incoming_origin()
+This function can only be used in the Incoming Script.  It returns the part of the incoming email that the current recipient was found in:
+
+0	No recipients were found, and No Recipient Required is checked.
+1	CC: header
+2	To: header
+3	Reply-To: header
+4	From: header
+5	Subject: header
+6	Attachment
+7	Body
+
+The following example auto-responds to only recipients in the body:
+
+[[if incoming_origin() = 4]]
+  [[incoming_autorespond()]]
+[[endif]]
+
+
+
+Number ini_decrement(String filepath, String section, String entry, Number default)
+Decrements (subtracts 1 from) a numeric value in an INI file.  'section' is the section inside the INI file, which is inside brackets.  'entry' is the name of the entry that should be retrieved.  If the entry does not exist, it is created with the value in the 'default' parameter before it is decremented.
+
+The return value is the new value of the entry, after it was decremented.
+
+
+
+String ini_get(String filepath, String section, String entry, String default)
+Returns a value from an .INI file.  'filepath' is the full drive, path, and filename of the INI file.  If no path is specified, the PATH environment variable is searched.  'section' is the section inside the INI file, which is inside brackets.  'entry' is the name of the entry that should be retrieved.  If the entry cannot be found, 'default' is returned instead.
+
+For example, consider this INI file:
+[foo]
+bar1=abc123
+bar2=xyz789
+
+If the file is named "c:\work\test.ini", then:
+[[ini_get("c:\work\test.ini", "foo", "bar1", "def")]] returns "abc123".
+[[ini_get("c:\work\test.ini", "foo", "bar2", "def")]] returns "xyz789".
+[[ini_get("c:\work\test.ini", "foo", "bar3", "def")]] returns "def".
+
+
+Date ini_get_date(String filepath, String section, String entry [, Date default] )
+Same as the ini_get() function, except this version returns a date/time value instead of a string.
+
+The 'default' parameter is optional.  If the entry does not exist and no 'default' parameter is specified, this function returns an invalid date.  Use date_valid() to determine if the date is valid.
+
+
+Number ini_get_number(String filepath, String section, String entry, Number default)
+Same as the ini_get() function, except this version returns a numeric value instead of a string.
+
+
+Number ini_increment(String filepath, String section, String entry, Number default)
+Increments (adds 1 to) a numeric value in an INI file.  'section' is the section inside the INI file, which is inside brackets.  'entry' is the name of the entry that should be retrieved.  If the entry does not exist, it is created with the value in the 'default' parameter before it is incremented.
+
+The return value is the new value of the entry, after it was incremented.
+
+
+
+Void ini_set(String filepath, String section, String entry, AnyType value)
+Stores 'value' in an .INI file.  'filepath' is the full drive, path, and filename of the INI file.  If no path is specified, the PATH environment variable is searched.  'section' is the section inside the INI file, which is inside brackets.  'entry' is the name of the entry that should be stored.
+
+For example, the following statements:
+[[ini_set("c:\work\test.ini", "foo", "bar1", "abc123")]]
+[[ini_set("c:\work\test.ini", "foo", "bar2", "xyz789")]]
+
+will create "c:\work\test.ini" with these contents:
+[foo]
+bar1=abc123
+bar2=xyz789
+
+
+Boolean is_address_valid(String s)
+Returns TRUE if the email address 's' has the valid syntax for a simple or compound email address.  Returns FALSE otherwise.
+
+Example	Result
+is_address_valid("foo@bar.net")	TRUE
+is_address_valid("foo@bar@baz.com")	FALSE
+is_address_valid("""John Public"" <foo@bar.net> (Acme)")	TRUE
+
+
+Number largest(Number n1, Number n2)
+Returns the larger of two numbers.
+
+Example	Result
+largest(63, 19) 	63
+largest(-51, -3) 	-3
+
+
+String latch(String s, String key)
+This function searches 's' for the substring 'key'.  If it is found, the rest of the line in 's' that follows 'key' is returned.  If 'key' is not found, an empty string is returned.
+
+Notes:
+· All whitespace is trimmed from both ends of the returned string.
+· This function is intended to be used to extract data from incoming email.  In this case, 's' should be the email body, which is typically obtained by calling the incoming_get_text() function.
+
+Here is an example.  Say the variable 's' is a string containing the following three lines:
+key1: value1
+key2:value2
+key3:    value3
+
+In this example, latch(s, "key1") would return "value1", latch(s, "key2") would return "value2", and latch(s, "key3") would return "value3".
+
+
+String latch_attachment(String key [, Boolean ci] [, Boolean nl] )
+This function searches all of an incoming email's attachments for the substring 'key'.  If it is found, the rest of the line in the attachment that follows 'key' is returned.  If 'key' is not found, an empty string is returned.
+
+If the optional 'ci' parameter is FALSE or omitted, the search for 'key' is case-sensitive.  If the 'ci' parameter is TRUE, the search will ignore the difference between upper and lower case letters.
+
+If the optional 'nl' parameter is FALSE or omitted, the return value is the rest of the line that occurs after the 'key' parameter.  If the 'nl' parameter is TRUE, the return value is the entire next line that occurs below the key.
+
+Notes:
+· All whitespace is trimmed from both ends of the returned string.
+· This function can only be used in the Incoming Script.
+· This function will search through multiple attachments until 'key' is found.
+
+Consider the following example of an incoming email attachment:
+key1: value1
+key2:value2
+key3:    value3
+
+latch_attachment("key1") returns "value1"
+latch_attachment("key2") returns "value2"
+latch_attachment("key3") returns "value3"
+latch_attachment("KEY1") returns ""
+latch_attachment("KEY1", FALSE) returns ""
+latch_attachment("KEY1", TRUE) returns "value1"
+latch_attachment("key2", FALSE, TRUE) returns "key3:    value3"
+
+
+
+String latch_html_until(String key [, String until] )
+This function searches the HTML Body of the incoming email for the substring 'key'.  If it is found, the return value is everything that follows 'key' until the string in the 'until' parameter is encountered.  If 'key' is not found, an empty string is returned.  If the 'until' parameter is not specified, "<" is used as a default.
+
+Notes:
+· The search for 'key' is case sensitive, however the search for 'until' is not.
+· All whitespace is trimmed from both ends of the returned string.
+· This function can only be used in the Incoming Script.
+
+Consider the following example of an incoming HTML Body:
+key1: value1<br>
+key2:value2<br>
+key3:    value3  <br>
+
+latch_html_until("key1", "<br>") returns "value1"
+latch_html_until("key2", "<br>") returns "value2"
+latch_html_until("key3", "<br>") returns "value3"
+latch_html_until("KEY1", "<br>") returns ""
+
+See Also:
+html_neutralize()
+latch_text()
+
+
+
+String latch_text(String key)
+This function searches the Text Body of the incoming email for the substring 'key'.  If it is found, the return value is everything that follows 'key' until the end of the line.  If 'key' is not found, an empty string is returned.
+
+Notes:
+· The search for 'key' is case sensitive.
+· All whitespace is trimmed from both ends of the returned string.
+· This function can only be used in the Incoming Script.
+
+Consider the following example of an incoming Text Body:
+key1: value1
+key2:value2
+key3:    value3
+
+latch_text("key1") returns "value1"
+latch_text("key2") returns "value2"
+latch_text("key3") returns "value3"
+latch_text("KEY1") returns ""
+
+See Also:
+latch_html_until()
+
+
+
+String latch_i(String s, String key)
+Same as the latch() function except this version is not case-sensitive when performing the search for 'key'.
+Example	Result
+latch_i("Key:foo", "KEY:")	"foo"
+
+
+String latch_n(String s, String key)
+Same as the latch() function, except that instead of returning all text to the end of the line, this returns the next line that occurs after the key.
+
+Example	Result
+latch_n("Key:abc" + CR + "def" + CR + "ghi", "Key:")	"def"
+latch_n("Key:abc" + CR + "def" + CR + "ghi", "KEY:")	""
+
+
+String latch_ni(String s, String key)
+Same as the latch_n() function, except this version is not case-sensitive when performing the search for 'key'.
+
+Example	Result
+latch_ni("Key:abc" + CR + "def" + CR + "ghi", "KEY:")	"def"
+latch_ni("Key:abc" + CR + "def" + CR + "ghi", "badkey:")	""
+
+
+String latch_until(String s, String key, String terminator)
+Returns a substring of 's' that begins after the substring 'key' and ends at the substring 'terminator'.  If 'terminator' is empty or not found, everything after 'key' is returned.  If 'key' is not found, an empty string is returned.
+
+Notes:
+· Unlike latch_until_i(), this function is case-sensitive when searching for 'key' and 'terminator'.
+· The returned string will be trimmed of leading and trailing whitespace characters.
+
+Example	Result
+latch_until("foobar:baz1234", "bar:", "12")	"baz"
+latch_until("foobar:baz1234", "bar:", "")	"baz1234"
+latch_until("foobar:baz1234", "bar:", "xxx")	"baz1234"
+latch_until("foobar:baz1234", "BAR:", "12")	""
+
+
+String latch_until_i(String s, String key, String terminator)
+Returns a substring of 's' that begins after the substring 'key' and ends at the substring 'terminator'.  If 'terminator' is empty or not found, everything after 'key' is returned.  If 'key' is not found, an empty string is returned.
+
+Notes:
+· Unlike latch_until(), this function is not case-sensitive when searching for 'key' and 'terminator'.
+· The returned string will be trimmed of leading and trailing whitespace characters.
+
+Example	Result
+latch_until_i("foobar:baz1234", "BAR:", "12")	"baz"
+latch_until_i("foobar:baz1234", "bar:", "")	"baz1234"
+latch_until_i("foobar:baz1234", "bar:", "xxx")	"baz1234"
+latch_until_i("foobar:baz1234", "xxx:", "12")	""
+
+
+Void log(AnyType...)
+Writes all of the parameters to the operation log.  Any nonzero number of parameters is allowed.  The parameters can be any data type.  If no operation log is being recorded, this function does nothing.
+
+When performing a Send Operation, this function writes to the Send Log.  When performing an Incoming Operation, this function writes to the Incoming Log.
+
+Example:
+[[log("It is ", _now, " and all is well.", CR)]]
+
+
+
+Void log_banner()
+Writes a banner to the operation log.  If no operation log is being recorded, this function does nothing.  This function is normally only called immediately after calling log_open().  Following is an example of a log banner:
+
+=====================================
+Gammadyne Mailer 62.0 
+Send Operation
+Performed on 6/10/2021 8:22:40 p.m.
+Project:  June Newsletter
+=====================================
+
+
+Example:
+[[log_open("c:\foo\bar.txt") ; log_banner()]]
+
+
+
+Void log_close()
+Closes the operation log.  If no operation log is being recorded, this function does nothing.
+
+When performing a Send Operation, this function closes the Send Log.  When performing an Incoming Operation, this function closes the Incoming Log.
+
+Example:
+[[log_close()]]
+
+
+
+Void log_open( [String filepath] )
+Opens an operation log file.  The only parameter is the filepath of the log file.  If the parameter is omitted or an empty string, the previous log is reopened.
+
+Notes:
+· If the file already exists, the previous contents are retained, and any newly logged information will be added to the end of the log.  To create a new log, use the file_delete() function first.
+· When performing a Send Operation, this function opens a Send Log.  When performing an Incoming Operation, this function opens an Incoming Log.
+· If an existing log file is already open, it is first closed.
+
+Example:
+[[log_open("c:\foo\bar.txt")]]
+
+Example, using an .INI file to record an incremented log index:
+[[var index = ini_get_number("c:\foo\bar.ini", "LogIndices", "Index1", 1)]]
+[[ini_set("c:\foo\bar.ini", "LogIndices", "Index1", index + 1)]]
+[[var filepath = "c:\foo\bar" + number_format(index) + ".log"]]
+[[file_delete(filepath)]]
+[[log_open(filepath)]]
+[[log_banner()]]
+
+
+
+Number mailbox_count(String server, String user, String password)
+This function returns the number of emails waiting in the inbox of a POP3/IMAP4 mail account.  Specify the server name or IP address in the 'server' parameter.  Specify the account user name and password in the 'user' and 'password' parameters.
+
+Notes:
+· Returns 0 if the mailbox is empty.
+· Returns -1 if the server could not be resolved into an IP address by DNS.
+· Returns -2 if no connection could be established with the server.
+· Returns -3 if the server did not properly report the number of emails.
+· The server name can be followed by a colon and a port number.  If omitted, the port defaults to 110.
+· If the port number is 143 or 993, the IMAP4 protocol is used instead of POP3.
+· If the port number is 993 or 995, the connection will be SSL encrypted for security.
+· The password can be "oauth:gmail" or "oauth:microsoft" if OAuth authentication is required.  OAuth does not use a password.
+· This function will cause Gammadyne Mailer to freeze for a period of time.
+· If there is an error, it will be logged.
+
+Examples:
+[[var count = mailbox_count("foo.com", "john", "sesame")]]
+[[var count = mailbox_count("imap.example.com:993", "gandalf@example.com", "belloch")]]
+[[var count = mailbox_count("pop.gmail.com:995", "bill@gmail.com", "oauth:gmail")]]
+
+
+
+Void mime_change_header(Variable v, String header, String value)
+This function alters a header in a MIME email in the string variable 'v'.  The name of the header is specified in the 'header' parameter, and the new value is specified in the 'value' parameter.  If the header is not already present, it will be added.  Normally, this function is used on the _mime predefined variable in the Incoming Script to alter an incoming email before it is forwarded to another email address.
+
+Example:
+[[mime_change_header(_mime, "Subject", "this is the new subject")]]
+
+
+String mime_content(String mime)
+This function extracts the text content from a MIME email.  It returns the HTML body, converted to text, followed by the Text body.
+
+This function is ideal for testing an incoming email for the presence of a text substring.  For example, this Incoming Script will delete and ignore all incoming emails that contain the text "viagra".
+
+[[var content = mime_content(_mime)]]
+[[if str_contains_i(content, "viagra")]]
+  [[incoming_delete(TRUE)]]
+  [[disregard()]]
+[[endif]]
+
+See Also:
+disregard()
+_mime
+incoming_delete()
+mime_get_html_body()
+mime_get_text_body()
+
+
+
+Void mime_convert_to_html(Variable v)
+This function modifies a MIME email as follows:
+
+1.  If there is an HTML Body, its non-ASCII characters are encoded to ensure that the character set is irrelevant.  This is an important strategy for embedding the HTML inside another HTML, such as sending an auto-response (see below).
+2.  If there is no HTML Body, the Text Body is converted to HTML, which becomes the new HTML Body.
+3.  The Text Body is removed.
+
+This function only accepts one parameter, a variable that contains a MIME email.  Normally this is used in the Incoming Script on the _mime predefined variable.
+
+This function is typically used when sending an HTML Autoresponse.  Here is an example of an HTML Body that includes the original email:
+
+<HTML>
+<HEAD>
+</HEAD>
+<BODY style="MARGIN: .5em">
+<P>
+Thank you for contacting us!&nbsp; A sales associate will contact you shortly.<br>
+<br>
+---------- Original Message ----------<br>
+[[var m = _mime]][[mime_convert_to_html(m)]][[raw mime_get_html_body(m)]]
+</P>
+</BODY>
+</HTML>
+
+
+
+See Also:
+convert_to_html()
+html_from_text()
+_mime
+mime_convert_to_text()
+mime_get_html_body()
+mime_get_text_body()
+mime_html_set()
+mime_text_set()
+"raw" directive
+
+
+
+Void mime_convert_to_text(Variable v)
+This function modifies a MIME email as follows:
+
+1.  If there is no HTML Body, it returns immediately.
+2.  If there is no Text Body, the HTML Body is converted to text, which becomes the new Text Body.
+3.  The HTML Body is removed.
+4.  All HTML embedded images are removed.
+
+This function only accepts one parameter, a variable that contains a MIME email.  Normally this is used in the Incoming Script on the _mime predefined variable.
+
+Notes:
+· If a Text Body already exists, no HTML to text conversion takes place.
+· If HTML to text conversion is necessary, the new Text Body will be encoded in UTF-8 so that all unicode characters are supported.
+
+Example:
+[[mime_convert_to_text(_mime)]]
+
+See Also:
+convert_from_html()
+convert_html_to_text()
+_mime
+mime_convert_to_html()
+mime_get_html_body()
+mime_get_text_body()
+mime_html_set()
+mime_text_set()
+
+
+
+Boolean mime_delete_header(Variable v, String header)
+This function deletes a header in a MIME email in the string variable 'v'.  The name of the header is specified in the 'header' parameter.
+
+Notes:
+· Normally, this function is used on the _mime predefined variable in the Incoming Script to alter an incoming email before it is forwarded.
+· The return value is TRUE if the header was found and deleted, FALSE otherwise.
+· If the header occurs more than once, only the first matching header is deleted.
+
+Example, deleting the first matching header:
+[[mime_delete_header(_mime, "Resent-From")]]
+
+Example, deleting all matching headers:
+[[while mime_delete_header(_mime, "Received")]][[endw]]
+
+
+
+Void mime_delete_headers(Variable v, String header1 [, String header2 ...])
+This function deletes all occurrences of one or more headers from a MIME email in the string variable 'v'.  Normally, this function is used on the _mime predefined variable in the Incoming Script to alter an incoming email before it is forwarded.
+
+Example:
+[[mime_delete_headers(_mime, "Received", "Resent-From", "In-Reply-To", "X-Mailer")]]
+
+
+
+String mime_get_header(String mime, String header)
+This function searches a MIME email in the string parameter 'mime' for the header named in the 'header' parameter.  If found, the header's value is returned.  Otherwise, an empty string is returned.
+
+Notes:
+· Normally, this function is used on the _mime predefined variable in the Incoming Script.  This is equivalent to using the incoming_get_header() function.
+· Header names are not case sensitive.
+· There must not be a colon at the end of the 'header' parameter.
+· If the header occupied more than one line, it is converted to one line.
+· If the header occurred multiple times in the incoming email, all of them are returned, each on a separate line.
+· If the header contains MIME header encoding, it will be decoded.
+
+Example, storing the subject in the variable 'foo':
+[[var foo = mime_get_header(_mime, "Subject")]]
+
+See Also:
+convert_from_header()
+incoming_get_header()
+
+
+
+String mime_get_html_body(String mime)
+This function returns just the HTML body portion of a MIME email.  Normally, the _mime variable is passed to this function in the Incoming Script, like so:
+
+[[var html = mime_get_html_body(_mime)]]
+
+See Also:
+mime_content()
+mime_get_text_body()
+
+
+
+String mime_get_text_body(String mime)
+This function returns just the text body portion of a MIME email.
+
+Here is an example of an auto-responder Text Body that includes the original email:
+
+Thank you for contacting us!  A sales associate will contact you shortly.
+
+---------- Original Message ----------
+[[var m = _mime]][[mime_convert_to_text(m)]][[mime_get_text_body(m)]]
+
+
+
+See Also:
+mime_content()
+mime_get_html_body()
+
+
+
+String mime_headers(String mime)
+Extracts all headers from the MIME body in the 'mime' parameter, and returns them as one long string with one header per line.
+
+This is typically used in the Incoming Script on the "_mime" variable.
+
+
+
+Void mime_html_append(Variable v, String s)
+This function appends the string 's' to the HTML body within a MIME email in the string variable 'v'.  Normally, this function is used on the _mime predefined variable in the Incoming Script to add a footer to an incoming email before it is forwarded.
+
+Example:
+[[mime_html_append(_mime, "<br><p>your footer here</p>")]]
+
+Notes:
+· This function will work correctly even if the MIME email contains a text body, embedded images, and attachments.
+· This function will work correctly even if the HTML body is encoded in Quoted-Printable, Base64, or UUEncode.
+
+
+
+Void mime_html_prepend(Variable v, String s)
+This function prepends the string 's' to the HTML body within a MIME email in the string variable 'v'.  Normally, this function is used on the _mime predefined variable in the Incoming Script to add HTML code to an incoming email before it is forwarded.
+
+Example:
+[[mime_html_prepend(_mime, "<p>your header here</p><br>")]]
+
+Notes:
+· This function will work correctly even if the MIME email contains a text body, embedded images, and attachments.
+· This function will work correctly even if the HTML body is encoded in Quoted-Printable, Base64, or UUEncode.
+
+
+
+Void mime_html_set(Variable mime, String html)
+This function overwrites an HTML body within a MIME email.  The first parameter, 'mime', should be a string variable that contains the email.  Normally, this is the _mime predefined variable.  The second parameter, 'html', is the new HTML body that should replace the old HTML body.
+
+Example:
+[[mime_html_set(_mime, "<html><body>This is the new HTML body</body></html>")]]
+
+Notes:
+· If the MIME email does not contain an HTML body, this function does nothing.
+· This function will work correctly even if the HTML body is encoded in Quoted-Printable, Base64, or UUEncode.
+
+
+
+Void mime_print(String mime [, Number flags, String header] )
+This function prints the body of an email.  Normally, this function is used in the Incoming Script, and the 'mime' parameter is the _mime predefined variable.
+
+If the optional 'flags' parameter is specified, it can be any sum of the following:
+
+Value	Description
+0	Print just the email body.
+1	Print the original email's From, To, Date, and Subject headers at the top of the first page.
+
+If the optional 'header' parameter is specified, this will be printed at the top of each page.  Otherwise "Page # of #" will be printed at the top (HTML only).
+
+Example:
+[[mime_print(_mime, 1, "This is a title.")]]
+
+Notes:
+· The default printer is used, with all default settings.
+· If the email contains an HTML Body, it is printed.  Otherwise, if there is a Text Body, that is printed.  Otherwise the function returns without printing anything.
+
+
+
+Void mime_strip_attachments(Variable v [, String extension] )
+This function strips all attachments from a MIME email in the string variable 'v'.  It does not strip the HTML Body or its embedded images.  Normally, this function is used on the _mime predefined variable in the Incoming Script.
+
+The optional second parameter 'extension' can specify a particular filename extension.  Instead of discarding all attachments, only attachments with the specified extension will be removed.  For example, if this parameter is "exe", only executable attachments are deleted.
+
+Example:
+[[mime_strip_attachments(_mime)]]
+[[mime_strip_attachments(_mime, "exe")]]
+
+See also:  The "Strip Attachments" Option
+
+
+Void mime_text_append(Variable v, String s)
+This function appends the string 's' to the text body within a MIME email in the string variable 'v'.  Normally, this function is used on the _mime predefined variable in the Incoming Script to add a footer to an incoming email before it is forwarded.
+
+Example:
+[[mime_text_append(_mime, CR + "your footer here")]]
+
+Notes:
+· This function will work correctly even if the MIME email contains HTML, embedded images, and attachments.
+· This function will work correctly even if the text body is encoded in Quoted-Printable, Base64, or UUEncode.
+
+
+
+Void mime_text_prepend(Variable v, String s)
+This function prepends the string 's' to the text body within a MIME email in the string variable 'v'.  Normally, this function is used on the _mime predefined variable in the Incoming Script to add text to the beginning of an incoming email before it is forwarded.
+
+Example:
+[[mime_text_prepend(_mime, "your header here" + CR)]]
+
+Notes:
+· This function will work correctly even if the MIME email contains HTML, embedded images, and attachments.
+· This function will work correctly even if the text body is encoded in Quoted-Printable, Base64, or UUEncode.
+
+
+
+Void mime_text_set(Variable mime, String text)
+This function overwrites a text body within a MIME email.  The first parameter, 'mime', should be a variable that contains an email in MIME format.  Normally, this is the _mime predefined variable.  The second parameter, 'text', is the new text body that should replace the old text body.
+
+Example:
+[[mime_text_set(_mime, "This is the new text body")]]
+
+Notes:
+· If the MIME email does not contain a text body, this function does nothing.
+· This function will work correctly even if the text body is encoded in Quoted-Printable, Base64, or UUEncode.
+
+
+
+Void mw_ok(String caption, AnyType text)
+Displays a simple popup message window with an "OK" button.
+
+Example:
+[[mw_ok("Error", "The operation must abort.")]]
+
+
+
+Boolean mw_ok_cancel(String caption, AnyType text)
+Displays a simple popup message window with "OK" and "Cancel" buttons.  Returns TRUE if the "OK" button was clicked, or FALSE if the "Cancel" button was clicked.
+
+Example:
+[[if !mw_ok_cancel("Error", "An error occurred.")]]
+[[disregard()]]
+[[endif]]
+
+
+
+Void mw_ok_long(String caption, AnyType text, String long_text)
+Displays a simple popup message window with an "OK" button.  The parameter 'long_text' is displayed in a scrollable, read-only editbox.
+
+Example:
+[[mw_ok_long("Received", "Incoming email received:", _mime)]]
+
+
+
+Boolean mw_retry_cancel(String caption, AnyType text)
+Displays a simple popup message window with "Retry" and "Cancel" buttons.  Returns TRUE if the "Retry" button was clicked, or FALSE if the "Cancel" button was clicked.
+
+
+
+Void nothing()
+Discards the Text Body, HTML Body, or Attached Files List, without excluding the recipient altogether.  When this function is called, the body where it was located will be eliminated (as if it had been left blank).  No further G-Merge statements will be processed in the body.
+
+For example, if the database contains a column named "no_html" that contains a TRUE value when the recipient is known to have an email client incapable of handling HTML, the HTML Body might look like this:
+
+[[if no_html]] [[nothing()]] [[endif]]
+
+
+See also:
+disregard()
+return()
+stop()
+
+
+
+String number_format(Number n [, String format])
+Returns the number 'n' represented as a string.
+
+The optional parameter 'format' determines how 'n' is represented.  'format' is a string consisting of the number of characters before the decimal point, followed by a comma (if thousands separators should be used) or a period (if not), followed by the number of characters after the decimal point.  If the number of characters preceding the decimal point begins with a 0, the number is padded with 0's instead of spaces.  If the number of characters preceding the decimal point is omitted, no left-hand padding will occur.
+
+Notes:
+· If the optional 'format' parameter is omitted, ".0" is used by default.
+· By default, commas are not inserted if 'n' is less than 10,000.  To change this behavior, use two commas.
+· The first parameter can also be a string representation of a number.
+
+In addition, the following special format strings are supported:
+
+Format	Description	Example
+e	Eighths	One Hundred Twenty Three and One Eighth
+h	Hundredths	One Hundred Twenty Three and 45/100
+od	Ordinal-digits	123rd
+ow	Ordinal-words	One Hundred Twenty Third
+r	Roman Numerals	CXXIII
+w	Words	One Hundred Twenty Three Point Four
+x	Hexadecimal	1A73C2E
+y	Years	Two Thousand Two
+
+There is also a method for using the "Region and Language" settings of the operating system.  Put a capital "L" at the end of the format code.  For example, number_format(-123456789.12, ",2L") returns "- 123.456.789,12" if the system locale is Croatian.  Notice that Croatian uses a different thousands separator, a different decimal point, and a space after the negative sign.
+
+
+Example	Result
+number_format(123.456, ".0")	"123"
+number_format(123.456)	"123"
+number_format(123.456, "4.2")	" 123.46"
+number_format(123.456, "5.0")	"  123"
+number_format(123.456, "05.3")	"00123.456"
+number_format(123.456, "6,4")	"   123.4560"
+number_format(12389.456, ".2")	"12389.46"
+number_format(12389.456, ",2")	"12,389.46"
+number_format(1234, "5,0")	" 1234"
+number_format(1234, "5,,0")	" 1,234"
+number_format(16.375, "e")	"Sixteen and Three Eighths"
+number_format(49.95, "h")	"Forty Nine and 95/100"
+number_format(185, "od")	"185th"
+number_format(92, "ow")	"Ninety Second"
+number_format(123, "r")	"CXXIII"
+number_format(927, "w")	"Nine Hundred Twenty Seven"
+number_format(123.410, "w")	"One Hundred Twenty Three Point Four One"
+number_format(5643, "x")	"160B"
+number_format(5643, "6x")	"00160B"
+number_format(2002, "y")	"Two Thousand Two"
+
+
+Number pow(Number base, Number exponent)
+Returns 'base' to the power of 'exponent'.
+
+Example	Result
+pow(10, 2)	100
+pow(81, .5)	9
+
+
+String project_filepath()
+Returns the complete drive, path, and filename of the project file.
+
+Example	Result
+project_filepath()	"c:\Projects\May Newsletter.mmp"
+
+
+String project_name()
+Returns the project name.  This is taken from the project's filename, but does not include the path or extension.
+
+Example	Result
+project_name()	"May Newsletter"
+
+
+Number prompt(String caption, String controls [, Number flags] )
+This function displays a window, complete with text and controls.  In fact, the prompt() function is so versatile, it has its own chapter.
+
+
+String promptify(AnyType v)
+Returns 'v', converted to a string, and with each tick mark replaced with a pair of tick marks.  For example, promptify("foo'bar") returns "foo''bar".
+
+This function is used to insert a variable into a string literal for the prompt() function.  Following is an example:
+
+[[prompt("Caption", "text { text='Ready to begin sending.  Current date/time: " + promptify(_now) + "' }; button { text='OK' }")]]
+
+
+Number random(Number lowest, Number highest)
+Returns a random number between (and including) 'lowest' and 'highest'.  For example, random(3, 5) will return either 3, 4, or 5.  The allowable range is ±2147483647.
+
+
+String random_digits(Number min [, Number max] )
+Returns a string of random digits.  The string will contain no fewer than 'min' digits, and no more than 'max' digits.  If the 'max' parameter is not specified, then the returned string will always contain exactly 'min' digits.
+Example	Result
+random_digits(4)	"0483"
+random_digits(2, 4)	"173"
+random_digits(2, 4)	"9627"
+random_digits(2, 4)	"05"
+
+
+String random_order(String separator, AnyType s1, [AnyType s2, ...] )
+Returns a concatenation of a list of strings in a random order.  'separator' will be inserted in between each.
+Example	Result
+random_order(", ", "red", "green", "blue")	"green, blue, red"
+random_order(".", 1, 2, 3)	"3.1.2"
+random_order("", "aa", "bb", "cc")	"aaccbb"
+
+
+String random_string( [Number min] [, Number max] )
+Returns a string of random letters, with no fewer than 'min' characters and no more than 'max' characters.  If no parameters are specified, the returned string will contain 4 to 10 characters.  If only one parameter is specified, the returned string will contain exactly that many characters.
+Example	Result
+random_string()	"kwpxg"
+random_string(3)	"zti"
+random_string(6, 7)	"yhanvd"
+
+
+AnyType random_switch(AnyType p1, AnyType p2, ...)
+Returns a copy of one of the parameters at random.  The parameters should all be the same type, although this is not enforced.  There is no limit on the number of parameters.
+
+For example, random_switch(73, 17, 52) will return either 73, 17, or 52.
+
+Here is an example that embeds a random hyperlink in an HTML body:
+
+<a href="http://[[random_switch("www.foo.com", "www.bar.com", "www.baz.com")]]">Click here</a>
+
+
+
+String recipient_filepath()
+Returns the filepath of the Recipient File that contains the current recipient.  If the recipient was obtained from the Database or Recipient List, this function will return an empty string.  This function cannot be used in Incoming operations.
+
+Following is an example of a Text Body that merges a different paragraph depending on what mailing list the recipient is in:
+
+[[if recipient_filepath() = "c:\work\vendors.txt"]]
+Thank you for supplying us with widgets.
+[[else]]
+Thank you for purchasing our widgets.
+[[endif]]
+
+
+
+String recipient_list()
+Returns the entire Recipient List.
+
+Notes:
+· This does not include recipients in the database or Recipient File.
+· Each recipient is separated by a semi-colon, regardless of the original separator.
+· The return value is encoded in UTF-8.
+
+
+
+Number remove_recipients(String addresses [, String filespec] )
+Removes all email addresses in 'addresses' from a mailing list.  The 'addresses' parameter is typically the _email predefined variable which holds the email address that is currently being processed.
+
+The second parameter is optional.  It can contain a list of one or more plain text files that contain the mailing list.  If the second parameter is omitted, the mailing list location is determined by the "Locations" section of the Remove/Options branch.
+
+Notes:
+· This function obeys the settings on the Remove/Options branch.
+· This function obeys the Simple-Merge feature, even if the 'filespec' parameter is used.
+· This function returns the number of addresses that were successfully removed.
+· This function can only be used in the Incoming Script.
+· To include the entire Removal Log in the Incoming Log, check the Log Entire 'Remove' Operation box on the Incoming/Logging branch.
+· The 'addresses' parameter can contain multiple email addresses.  They must be separated by commas, semi-colons, or newlines.
+· If the address in the mailing list has an exclamation mark for the first character, then the recipient is considered "already removed".  However, the return value will still count this as a removal.
+
+Examples:
+[[remove_recipients(_email)]]
+[[remove_recipients("foo@bar.com", "c:\foo\bar.txt")]]
+[[remove_recipients(_email, "c:\foo\bar.txt;c:\foo\baz.txt")]]
+
+
+
+String regex_find(String subject, String regex [, Number flags] [, Number capture_wanted] [, Variable index] )
+Searches 'subject' for a substring that matches the Regular Expression 'regex'.
+
+The optional 'flags' parameter can be any sum of the following:
+
+Value	Description
+1	Case insensitive.
+2	'subject' contains multiple lines (the ^ will assert the beginning of a line, and $ will assert the end of a line).
+4	'subject' contains unicode characters.  The return value will also be wide.
+
+The return value is the entire match if found, otherwise an empty string.  The optional 'capture_wanted' parameter can specify 0 to keep this behavior, or it can be the 1-based index of a subpattern (a portion of the Regular Expression inside parenthesis).  This is useful when you only want to return a portion of the match.
+
+The optional 'index' parameter is a numeric variable that specifies the 0-based starting index within 'subject' where the search will begin.  Upon return, this variable will be updated to reflect the index of the end of the match.  If no match is found, the variable is set to the length of the subject.  This is useful for processing multiple matches.
+
+Following is an example of a loop that processes an incoming email's body, looking for every occurrence of the "Name:" tag and processing the rest of the line:
+[[var done = FALSE]]
+[[var content = mime_content(_mime)]]
+[[var i = 0]]
+[[do]]
+    [[var match = regex_find(content, "Name: (.+)$", 2, 1, i)]]
+    [[if match = ""]]
+        [[let done = TRUE]]
+    [[else]]
+        process 'match' here
+    [[endif]]
+[[while !done]]
+
+Example	Result
+regex_find("letters", "\d+")	""
+regex_find("--letters", "\w+")	"letters"
+regex_find("foo", "FOO")	""
+regex_find("foo", "FOO", 1)	"foo"
+regex_find("acb12", "([abc]+)(\d+)", 0, 0)	"abc12"
+regex_find("acb12", "([abc]+)(\d+)", 0, 1)	"abc"
+regex_find("acb12", "([abc]+)(\d+)", 0, 2)	"12"
+
+
+Void remember(String name, AnyType value)
+This creates a variable that will be available when the Success Script or Failure Script runs.
+
+This can be useful in the situation where a database column needs to be used by the Success/Failure Script, but a database query is an undesirable performance hit.  You see, when the Success/Failure Script executes, the database record has already been passed on by due to multithreading.  Gammadyne Mailer only remembers the primary key, and when the script references a database column, an "SQL SELECT" statement is sent to the database to retrieve it.  This is slower than when the email is being built and the database record has already been loaded in its entirety.
+
+This function is normally called in the Send Script.  For example, if the Send Script contains this:
+
+[[remember("example_copy", example)]]
+
+Then the Success/Failure Script can use a variable named "example_copy" which will hold the value of the database column named "example", possibly like this:
+
+[[db_add_row_table("success_table", "example2", example_copy)]]
+
+
+
+Void report_variables()
+Displays a window that lists every G-Merge variable, its type, and its current value.  This is intended for debugging.  The operation will pause until the window is closed.
+
+
+
+Void return(AnyType rv)
+Replaces the entire body with 'rv' and stops processing G-Merge.  This is mainly intended for user-defined functions but will work anywhere.
+
+See also:
+disregard()
+nothing()
+stop()
+
+
+
+Number round(Number n)
+Returns 'n' rounded up or down to the nearest integer.
+
+Example	Result
+round(528.7)	529
+round(1.5)	2
+round(-1.5)	-2
+
+
+Number round_down(Number n)
+Returns the largest whole integer that is less than or equal to 'n'.
+
+Example	Result
+round_down(63.89) 	63
+round_down(-63.89) 	-64
+
+
+Number round_to(Number n, Number m)
+Returns 'n' rounded up or down to the nearest multiple of 'm'.  If 'm' is negative, this function returns 'n' rounded to -m decimal digits.
+
+Example	Result
+round_to(3.5, 1.3)	3.9
+round_to(-882.7, 10)	-880
+round_to(1.2345, -1)	1.2
+round_to(1.2345, -2)	1.23
+round_to(1.2345, -3)	1.235
+
+
+Number round_up(Number n)
+Returns the smallest whole integer that is greater than or equal to 'n'.
+
+Example	Result
+round_up(63.19) 	64
+round_up(-63.19) 	-63
+
+
+Void send_delay_local(DateTime dt)
+Delays the sending of the current email.  'dt' is the date/time when the email should be sent, in local time.
+
+Note:  a thread will be tied up while waiting for the time to arrive.
+
+This example will delay the email by 10 seconds:
+[[send_delay_local(date_add_seconds(_now, 10))]]
+
+
+Void send_delay_utc(DateTime dt)
+Delays the sending of the current email.  'dt' is the date/time when the email should be sent, in Universal Coordinated Time (UTC).
+
+Note:  a thread will be tied up while waiting for the time to arrive.
+
+This example will delay the email by 10 seconds:
+[[send_delay_utc(date_add_seconds(date_current_utc(), 10))]]
+
+
+Void sleep(Number milliseconds)
+This function will cause Gammadyne Mailer's email building thread to pause for the specified number of milliseconds (1000 milliseconds = 1 second).  During this time, other processes and threads will continue to execute normally.
+
+Example:
+[[sleep(2000)]]
+
+
+
+Number smallest(Number n1, Number n2)
+Returns the smaller of two numbers.
+
+Example	Result
+smallest(63, 19) 	19
+smallest(-51, -3) 	-51
+
+
+String smime_describe( [Number status] )
+Returns an English description of an S/MIME status code.
+
+The 'status' parameter should contain the status code.  Typically this is obtained from the smime_status() function.  If this parameter is omitted, the status code from the incoming email is used.
+
+This function can only be used in the Incoming Script.
+
+Example	Result
+smime_describe(7) 	"The signature is not valid."
+smime_describe() 	"Email has a valid signature."
+
+
+Number smime_status()
+Returns the status code from when the incoming email was decoded:
+
+Status	Description
+0	Email has a valid signature.
+2	There is an unknown error.
+3	The email is not signed.
+4	Operating system lacks support for S/MIME.
+5	Message does not match signature.
+6	Message is signed with an unknown algorithm.
+7	The signature is not valid.
+8	Out of memory.
+9	Bad parameter.
+10	The private key is already in use.
+11	The cryptographic service provider needs to be upgraded.
+12	The email is not valid MIME format.
+13	Cannot find certificate.
+16	Cannot find the signer's S/MIME certificate.
+18	The certificate has expired.
+19	The root certificate is not installed or not trusted.
+20	Unable to build the certificate chain.
+21	One or more certificates in the chain were revoked.
+22	One or more certificates in the chain are invalid.
+23	Unable to determine if the certificate is revoked.
+24	The certificate is distrusted.
+25	The Certificate Trust List is invalid.
+26	Unable to open the certificate store.
+27	There is no attached signature.
+
+
+
+Void smtp_select(String server)
+This selects which SMTP server is going to be used to send the current email.  The parameter is the domain name of the SMTP server.  This name must appear in the "Server Name" column of the SMTP Server Table.
+
+Notes:
+· Normally, the servers in the table are rotated through.  This function allows you to override this behavior.
+· This function is normally called in the Send Script.
+· If the server name does not appear in the SMTP Server Table, the whole operation will abort with a fatal error.
+· If the server name is blank, this function does nothing and does not produce an error.
+
+This example relays all Gmail recipients through a particular server:
+
+[[if _domain = "gmail.com"]]
+  [[smtp_select("mail.example.com")]]
+[[endif]]
+
+
+
+Void sound_loop(String sound_filename)
+Plays the specified sound file in a continuous loop.  The sound file must be a .WAV file.  Stop the loop by calling sound_stop().
+
+
+Void sound_play(String sound_filename)
+Plays the specified sound file once.  The sound file must be a .WAV file.
+
+
+Void sound_stop()
+Stops the current sound being played (if any).  This only applies to the sound that was started by sound_play() or sound_loop().
+
+
+Number sqrt(Number n)
+Returns the square root of 'n'.
+
+Example	Result
+sqrt(81)	9
+sqrt(7.84)	2.8
+
+
+String sqlize(AnyType s)
+Returns the string 's' converted to a string literal for a SQL statement.  All tick marks are converted to double tick marks, and a single tick mark is inserted at the beginning and end of the string.
+
+If the database is MySQL, this will also replace the backslash character with two backslashes.
+
+This function is almost always used when building a SQL statement for the db_execute() function.
+
+Example	Result
+sqlize("foo")	"'foo'"
+sqlize("abc'def")	"'abc''def'"
+
+
+String sqlize_date(AnyType s)
+Returns the parameter 's' converted to a date literal for a SQL statement.  The format of the SQL date literal is controlled by the "SQL Date Format" setting.
+
+This function is almost always used when building a SQL statement for the db_execute() function, like this:
+
+[[db_execute("INSERT INTO my_table_name(my_column_name) VALUES(" + sqlize_date(_now) + ")")]]
+
+Note:  the following examples each demonstrate a different format based on the SQL Date Format setting.
+
+
+Example	Result
+sqlize_date(_now)	"#2/2/2004 10:18:38#"
+sqlize_date("Jan 7, 2000 3:56p")	"{ts '2000-01-07 15:56:00'}"
+sqlize_date(#3/16/95 22:10:40#)	"'1995-03-16 22:10:40'"
+
+
+Void stop( [Boolean truncate] )
+This function stops the processing of G-Merge.
+
+If 'truncate' is TRUE, the rest of the body is excluded from the result.  If 'truncate' is FALSE or omitted, the rest of the body is included and any G-Merge statements will remain intact and unresolved.
+
+See also:
+disregard()
+nothing()
+return()
+
+Example	Result
+foo[[stop()]]bar[[x]]	"foobar[[x]]"
+foo[[stop(FALSE)]]bar[[x]]	"foobar[[x]]"
+foo[[stop(TRUE)]]bar[[x]]	"foo"
+
+
+Boolean str_case_homogenous(String s)
+Returns TRUE if all letters in 's' are upper case, or all letters are lower case.  Returns FALSE if 's' contains both upper and lower case letters, or there are no letters.
+
+This function is typically used like this:
+[[if str_case_homogenous(CustomerName)]]
+[[let CustomerName = convert_title_case(CustomerName)]]
+[[endif]]
+
+Example	Result
+str_case_homogenous("foo")	TRUE
+str_case_homogenous("FOO")	TRUE
+str_case_homogenous("Foo")	FALSE
+str_case_homogenous("!@#$")	TRUE
+
+
+String str_censor(String s)
+Returns the string parameter 's' with all profanity censored.
+
+The list of profane terms is stored in the file "Profanity.txt", located in the folder where Gammadyne Mailer is installed.  This file can be altered.  Installing new versions will not replace this file.
+
+Example	Result
+str_censor("George is a dickhead")	"George is a XXXXXXXX"
+
+
+String str_chop_after(String s1, String s2)
+Returns the string parameter 's1' truncated after the first occurrence of the substring 's2'.  If 's2' is not present inside 's1', then all of 's1' is returned.
+
+Example	Result
+str_chop_after("foobar", "ob")	"foob"
+str_chop_after("foobar", "xyz")	"foobar"
+
+
+String str_chop_at(String s1, String s2)
+Returns the string parameter 's1' truncated at the first occurrence of the substring 's2'.  If 's2' is not present inside 's1', then all of 's1' is returned.
+
+Example	Result
+str_chop_at("foobar", "ob")	"fo"
+str_chop_at("foobar", "xyz")	"foobar"
+
+
+Number str_compare(String s1, String s2)
+Returns -1 if s1 < s2, 0 if s1 = s2, and 1 if s1 > s2.  The comparison is case-sensitive.
+
+You can also compare strings using the equality operators (=, <, <=, >, >=).  However, this function is useful in the HTML Body because you can avoid using the < and > characters.  These characters represent the start and end of an HTML tag.  The HTML editor will convert them to &lt; and &gt; which produces a G-Merge syntax error.
+
+Example	Result
+str_compare("abc", "abc")	0
+str_compare("bar", "foo")	-1
+str_compare("bar", "abc")	1
+str_compare("foo", "FOO")	1
+
+
+Number str_compare_i(String s1, String s2)
+Returns -1 if s1 < s2, 0 if s1 = s2, and 1 if s1 > s2.  The comparison is not case-sensitive.
+
+You can also compare strings using the equality operators (=, <, <=, >, >=).  However, this function is useful in the HTML Body because you can avoid using the < and > characters.  These characters represent the start and end of an HTML tag.  The HTML editor will convert them to &lt; and &gt; which produces a G-Merge syntax error.
+
+Example	Result
+str_compare_i("bar", "FOO")	-1
+str_compare_i("foo", "FOO")	0
+str_compare_i("foo", "bar")	1
+
+
+Boolean str_contains(String main_string, String substring)
+Returns TRUE if 'main_string' contains 'substring'.  This is case sensitive.
+
+Example	Result
+str_contains("foobar", "ba")	TRUE
+str_contains("foobar", "x")	FALSE
+str_contains("foobar", "BA")	FALSE
+
+
+Boolean str_contains_any(String main_string, String s1, String s2, ...)
+Returns TRUE if 'main_string' contains any of the substrings specified after the 'main_string' parameter.  Any number of substrings can be listed.  This is case sensitive.
+
+Example	Result
+str_contains_any("zzfoozz", "bar", "foo")	TRUE
+
+str_contains_any("zzfoozz", "baz", "bar", "foo")	TRUE
+
+str_contains_any("zzfoozz", "baz", "bar", "FOO")	FALSE
+
+
+Boolean str_contains_any_i(String main_string, String s1, String s2, ...)
+Returns TRUE if 'main_string' contains any of the substrings specified after the 'main_string' parameter.  Any number of substrings can be listed.  This is not case sensitive.
+
+Example	Result
+str_contains_any_i("zzfoozz", "bar", "foo")	TRUE
+str_contains_any_i("zzfoozz", "baz", "bar", "FOO")	TRUE
+str_contains_any_i("zzfoozz", "baz", "bar", "foox")	FALSE
+
+
+Boolean str_contains_i(String main_string, String substring)
+Same as str_contains() except this is not case sensitive.
+
+Example	Result
+str_contains_i("foobar", "ba")	TRUE
+str_contains_i("foobar", "x")	FALSE
+str_contains_i("foobar", "BA")	TRUE
+
+
+Boolean str_contains_lower_case(String s)
+Returns TRUE if 's' contains at least 1 lower case letter.
+
+Example	Result
+str_contains_lower_case("ABC")	FALSE
+str_contains_lower_case("ABc")	TRUE
+
+
+Boolean str_contains_upper_case(String s)
+Returns TRUE if 's' contains at least 1 upper case letter.
+
+Example	Result
+str_contains_upper_case("abc")	FALSE
+str_contains_upper_case("aBc")	TRUE
+
+
+Boolean str_discard_prefix(Variable v, String s)
+If the string variable 'v' contains the prefix 's', it is discarded and TRUE is returned.  Otherwise, 'v' is not altered and FALSE is returned.  This is case sensitive.
+
+For example, if the variable "foo" contains the string "dakota", then str_discard_prefix(foo, "da") would return TRUE and foo would change to "kota".
+
+
+Boolean str_discard_prefix_i(Variable v, String s)
+If the string variable 'v' contains the prefix 's', it is discarded and TRUE is returned.  Otherwise, 'v' is not altered and FALSE is returned.  This is not case sensitive.
+
+For example, if the variable "foo" contains the string "dakota", then str_discard_prefix_i(foo, "DA") would return TRUE and foo would change to "kota".
+
+
+Boolean str_discard_suffix(Variable v, String s)
+If the string variable 'v' contains the suffix 's', it is discarded and TRUE is returned.  Otherwise, 'v' is not altered and FALSE is returned.  This is case sensitive.
+
+For example, if the variable "foo" contains the string "dakota", then str_discard_suffix(foo, "ota") would return TRUE and foo would change to "dak".
+
+
+Boolean str_discard_suffix_i(Variable v, String s)
+If the string variable 'v' contains the suffix 's', it is discarded and TRUE is returned.  Otherwise, 'v' is not altered and FALSE is returned.  This is not case sensitive.
+
+For example, if the variable "foo" contains the string "dakota", then str_discard_suffix_i(foo, "OTA") would return TRUE and foo would change to "dak".
+
+
+String str_discard_ws(String s)
+Returns the string parameter 's' with all whitespace removed.  Whitespace includes spaces, tabs, carriage returns, and line-feeds.
+
+Example	Result
+str_discard_ws(" foo" + CR + "bar ")	"foobar"
+
+
+Number str_find(String s, String substring [, Number starting_index] )
+Returns the index of the first occurrence of 'substring' in 's', beginning from 'starting_index'.  Returns -1 if 'substring' does not occur in 's'.  The starting index begins at 0 (the default).  Unlike the str_find_i() function, the search is case sensitive.
+
+Example	Result
+str_find("foobar", "xxx", 0)	-1
+str_find("foobar", "bar")	3
+str_find("foobar", "BAR", 0)	-1
+str_find("foobar foobar", "foo", 2)	7
+
+
+Number str_find_any(String s, Number start_index, String substring1, ...)
+Returns the 0-based index of the first occurrence of any of a list of substrings.  Returns -1 if no substring occurs in 's'.  The search begins at 'start_index', and is case sensitive.
+
+Example	Result
+str_find_any("abcdefghij", 0, "abx", "cde", "def")	2
+str_find_any("abcdefghij", 0, "abx", "def", "cde")	2
+str_find_any("abcdefghij", 0, "abx", "cdx", "def")	3
+str_find_any("abcdefghij", 0, "xxx", "yyy", "zzz")	-1
+str_find_any("abcdefghij", 1, "abc", "bcd")	1
+
+
+Number str_find_i(String s, String substring [, Number starting_index] )
+Returns the index of the first occurrence of 'substring' in 's', beginning from 'starting_index'.  Returns -1 if 'substring' does not occur in 's'.  The starting index begins at 0 (the default).  Unlike the str_find() function, the search is not case sensitive.
+
+Example	Result
+str_find_i("foobar", "xxx")	-1
+str_find_i("foobar", "BAR", 0)	3
+str_find_i("foobar foobar", "foo", 2)	7
+
+
+Number str_find_last(String s, String substring [, Number starting_index] )
+Returns the index of the last occurrence of 'substring' in 's', beginning with the character that precedes 'starting_index'.  Returns -1 if 'substring' does not occur in 's'.  The starting index begins at 0.  If no starting index is specified, the search begins at the end of 's'.  Unlike the str_find_last_i() function, the search is case sensitive.
+
+Example	Result
+str_find_last("AAAA", "A")	3
+str_find_last("AAAA", "a")	-1
+str_find_last("AAABC", "A")	2
+str_find_last("AAAA", "A", 2)	1
+str_find_last("ABCD", "E")	-1
+
+
+Number str_find_last_i(String s, String substring [, Number starting_index] )
+Returns the index of the last occurrence of 'substring' in 's', beginning with the character that precedes 'starting_index'.  Returns -1 if 'substring' does not occur in 's'.  The starting index begins at 0.  If no starting index is specified, the search begins at the end of 's'.  Unlike the str_find_last() function, the search is not case sensitive.
+
+Example	Result
+str_find_last_i("AAAA", "a")	3
+str_find_last_i("AAABC", "A")	2
+str_find_last_i("AAAA", "A", 2)	1
+str_find_last_i("ABCD", "E")	-1
+
+
+Number str_find_member(String s, String members [, Number starting_index] )
+Returns the index of the first occurrence in 's' of any character in 'members'.  If the optional 'starting_index' parameter is specified, the search begins at the specified index (0-based).  Returns -1 if no match was found.  The search is case-sensitive.
+
+Example	Result
+str_find_member("ab3xy", "1234")	2
+str_find_member("ab3xy", "5678")	-1
+str_find_member("ab3xy", "wxyz", 3)	3
+str_find_member("ab3xy", "uvwx", 4)	-1
+
+
+Number str_find_ws(String s, [, Number starting_index] )
+Returns the index of the first occurrence in 's' of any whitespace (spaces, tabs, carriage returns, line-feeds).  If the optional 'starting_index' parameter is specified, the search begins at the specified index (0-based).  Returns -1 if no whitespace was found.
+
+Example	Result
+str_find_ws("01 34 ")	2
+str_find_ws("01 34 ", 3)	5
+str_find_ws("01234")	-1
+
+
+String str_first_filled(String s1, String s2, ...)
+Returns the first parameter (s1, s2, ...) that is not an empty string.  Strings that contain only whitespace (spaces, tabs, carriage returns, and line-feeds) are considered empty.  There must be at least two string parameters, although there is no maximum.
+
+Example	Result
+str_first_filled("", " ", CR, "abc", "def")	"abc"
+
+
+String str_left(String s, Number count)
+Returns a string containing the first 'count' characters in 's'.
+
+Example	Result
+str_left("foo", 2)	"fo"
+str_left("foo", 99)	"foo"
+
+
+Number str_length(String s)
+Returns the number of characters in 's'.
+
+Example	Result
+str_length("foo")	3
+str_length("")	0
+
+
+String str_line_break(String s, Number length)
+Returns 's' with newlines inserted so that no line is longer than 'length'.  This is also known as "word wrapping".  This function is careful not to insert newlines inside of URL's since this would ruin a hyperlink.
+
+Please note that the Text Body will perform its own word wrapping after all G-Merge statements have been processed.
+
+
+String str_pad(String s, Number width, String p)
+Returns 's', padded with the first character in 'p' so that the width of the returned string is 'width'.
+
+Example	Result
+str_pad("foo", 5, "x")	"fooxx"
+str_pad("bar", 6, "-")	"bar---"
+
+
+String str_pad_r(String s, Number width, String p)
+Returns 's', padded with the first character in 'p' so that the width of the returned string is 'width'.  The returned string is right justified.
+
+Example	Result
+str_pad_r("foo", 5, "x")	"xxfoo"
+str_pad_r("bar", 6, "-")	"---bar"
+
+
+Boolean str_prefix(String s, String prefix)
+Returns TRUE if the string 's' begins with 'prefix'.  This is case sensitive.
+
+Example	Result
+str_prefix("foobar", "foo")	TRUE
+str_prefix("foobar", "FOO")	FALSE
+
+
+Boolean str_prefix_i(String s, String prefix)
+Same as str_prefix() except this is not case sensitive.
+
+Example	Result
+str_prefix_i("foobar", "foo")	TRUE
+str_prefix_i("foobar", "FOO")	TRUE
+str_prefix_i("foobar", "xyz")	FALSE
+
+
+Void str_put(Variable v, String s, int i [, int count] )
+Replaces 'count' characters in the string variable 'v' at starting index 'i' with the string 's'.  If 'count' is not specified, everything after 'i' is replaced.
+
+Examples:
+[[let t = "abcdefghij"]] 
+[[str_put(t, "XYZ", 4, 5)]]
+t is now "abcdXYZj"
+
+[[let t = "abcdefghij"]] 
+[[str_put(t, "xyz", 3)]]
+t is now "abcxyz"
+
+
+
+String str_reduce(String s)
+Returns the string parameter 's' with all runs of whitespace reduced to a single space.  Whitespace is also trimmed from both ends of the string.  Whitespace characters include the space, tab, carriage return, and linefeed.
+
+Example	Result
+str_reduce("  foo  bar  ")	"foo bar"
+str_reduce(" foo" + CR + "bar ")	"foo bar"
+
+
+String str_remove(Variable v, Number start_index [, Number length] )
+Removes and returns a substring of the string variable 'v'.  The substring begins at 'start_index' and contains 'length' characters.  The starting index begins at 0.  If the 'length' parameter is omitted, the remainder of the string is removed.
+
+For example, consider the following statements:
+[[var s = "foobar"]]
+[[var t = str_remove(s, 2, 3)]]
+
+After these statements execute, 's' will contain "for" and 't' will contain "oba".
+
+
+String str_remove_find(Variable v, String s)
+Searches the string variable 'v' for a substring 's'.  If found, everything after the occurrence is returned, and everything including and after the occurrence is deleted from the variable.
+
+For example, consider the following statements:
+[[var s = "ab,cde"]]
+[[var t = str_remove_find(s, ",")]]
+
+After these statements execute, 's' will contain "ab" and 't' will contain "cde".
+
+
+String str_remove_line(Variable v)
+Removes and returns the first line of the string variable 'v'.  The substring that is returned will not contain a trailing newline. 
+
+For example, consider the following statements:
+[[var s = "foo" + CR + "bar"]]
+[[var t = str_remove_line(s)]]
+
+After these statements execute, 's' will contain "bar" and 't' will contain "foo".
+
+
+String str_remove_line_last(Variable v)
+Removes and returns the last line of the string variable 'v'.  The substring that is returned will not contain a trailing newline. 
+
+For example, consider the following statements:
+[[var s = "foo" + CR + "bar"]]
+[[var t = str_remove_line_last(s)]]
+
+After these statements execute, 's' will contain "foo" and 't' will contain "bar".
+
+
+String str_replace(String x, String s, String r)
+Returns the string 'x', with every occurrence of 's' replaced with 'r'.  This is case sensitive.
+
+Example	Result
+str_replace("abc 123 abc", "abc", "z")	"z 123 z"
+
+
+String str_replace_i(String x, String s, String r)
+Returns the string 'x', with every occurrence of 's' replaced with 'r'.  This is not case sensitive.
+
+Example	Result
+str_replace_i("abc 123 abc", "ABC", "z")	"z 123 z"
+
+
+String str_right(String s, Number count)
+Returns a string containing the last 'count' characters in 's'.
+
+Example	Result
+str_right("bar", 2)	"ar"
+str_right("bar", 99)	"bar"
+
+
+String str_substring(String s, Number start_index [, Number length] )
+Returns a substring of the string variable 's'.  The substring begins at 'start_index' and contains 'length' characters.  The starting index begins at 0.
+
+If the 'length' parameter is omitted, the remainder of the string is returned.
+
+Example	Result
+str_substring("foobar", 2, 3)	"oba"
+str_substring("foobar", 4)	"ar"
+
+
+Boolean str_suffix(String s, String prefix)
+Returns TRUE if the string 's' ends with 'suffix'.  This is case sensitive.
+
+Example	Result
+str_suffix("foobar", "bar")	TRUE
+str_suffix("foobar", "BAR")	FALSE
+
+
+Boolean str_suffix_i(String s, String prefix)
+Same as str_suffix() except this is not case sensitive.
+
+Example	Result
+str_suffix_i("foobar", "bar")	TRUE
+str_suffix_i("foobar", "BAR")	TRUE
+str_suffix_i("foobar", "xyz")	FALSE
+
+
+String str_trim(String s [, String characters] )
+Returns 's' with characters removed from the beginning and end.  If the optional second parameter 'characters' is specified, all of the characters in it will be trimmed.  Otherwise, all whitespace characters are trimmed (spaces, tabs, carriage returns, and line feeds).
+
+Here is an example of how the str_trim() function can be used in an email body:
+
+Dear [[str_trim(Salutation + " " + FirstName + " " + LastName)]],
+
+This example assumes there are three database columns named Salutation, FirstName, and LastName.  The str_trim() function will make sure that there are no extra spaces if Salutation or LastName is blank, or if they contain spaces themselves.
+
+To automatically perform the str_trim() function on all G-Merge tags, take a look at the "Trim Whitespace From Data" option.
+Example	Result
+str_trim("  foo  ")	"foo"
+str_trim("123foo 223", "123")	"foo "
+
+
+String str_trim_end(String s [, String characters] )
+Returns 's' with characters removed from the end.  If the optional second parameter 'characters' is specified, all of the characters in it will be trimmed.  Otherwise, all whitespace characters are trimmed (spaces, tabs, carriage returns, and line feeds).
+
+Example	Result
+str_trim_end(" foo  ")	" foo"
+str_trim_end("123foo 223", "123")	"123foo "
+
+
+String str_trim_front(String s [, String characters] )
+Returns 's' with characters removed from the beginning.  If the optional second parameter 'characters' is specified, all of the characters in it will be trimmed.  Otherwise, all whitespace characters are trimmed (spaces, tabs, carriage returns, and line feeds).
+
+Example	Result
+str_trim_front("  foo ")	"foo "
+str_trim_front("123 foo223", "123")	" foo223"
+
+
+AnyType switch(AnyType value, AnyType key1, AnyType result1, AnyType key2, AnyType result2, ...)
+This function compares the first parameter, 'value', to each 'key' parameter.  If a match is found, the subsequent 'result' parameter is returned.
+
+Notes:
+· There is no limit on the number of keys and results.
+· This function can be used on any data type, and the data types do not have to be the same.
+· If no match is found, a NULL value is returned.
+· If no matches are found, and there is one extra parameter to the function, the last parameter is returned.  Basically, this last parameter is acting as a default.
+· The 'value' parameter is normally a variable or database column.  The examples below use a literal for the purposes of simplicity.
+
+Example	Result
+switch(2, 1, "a", 2, "b", 3, "c")	"b"
+switch("z", "a", 1, "b", 22, "c", 333)	NULL
+switch(2, 1, "a", 2, "b", 3, "c", "x")	"b"
+switch("z", "a", 1, "b", 22, "c", 333, 4444)	4444
+
+
+AnyType switchi(Number index, AnyType result1, AnyType result2, ...)
+This function returns one of its own parameters, based on the value of the 'index' parameter.  If 'index' is 0, 'result1' is returned.  If 'index' is 1, 'result2' is returned, and so on.
+
+Notes:
+· There is no limit on the number of parameters.
+· This result parameters can be any data type, and the data types do not have to be the same.
+· If 'index' is not valid, a NULL value is returned.
+
+To rotate through a different result for each email sent, use the _index variable, modulused with the number of results using the % operator, like this:
+
+[[switchi(_index % 4, "red", "blue", "green", "yellow")]]
+
+Example	Result
+switchi(0, "foo", #5/6/07#, 108)	"foo"
+switchi(1, "foo", #5/6/07#, 108)	#5/6/07#
+switchi(2, "foo", #5/6/07#, 100)	100
+switchi(99, "foo", #5/6/07#, 100)	NULL
+
+
+AnyType switchr(AnyType value, String op1, AnyType key1, AnyType result1, String op2, AnyType key2, AnyType result2, ...)
+This function compares the first parameter, 'value', to each 'key' parameter using the relational operator in each 'op' parameter.  If the comparison is true, the subsequent 'result' parameter is returned.
+
+Notes:
+· There is no limit on the number of sets of operators, keys, and results.
+· The following relational operators are supported:  "=", "<>", ">=", ">", "<=", and "<".
+· This function can be used on any data type, and the data types do not have to be the same.
+· If no match is found, a NULL value is returned.
+· If no matches are found, and there is one extra parameter to the function, the last parameter is returned.  Basically, this last parameter is acting as a default.
+· The 'value' parameter is normally a variable or database column.  The examples below use a literal for the purposes of simplicity.
+
+Example	Result
+switchr("foo", ">", "zoo", "error", "=", "foo", "bar")	"bar"
+switchr(12, ">", 15, 3, ">", 99, 2, "<=", 12, 9)	9
+switchr("foo", "<=", "ard", "error", "=", "food", "bar")	NULL
+switchr("foo", "<=", "ard", "error", "=", "food", "bar", "default")	"default"
+switchr(66, "<=", 99, "yes", "=", 21, "no", "unknown")	"yes"
+
+
+String texture_file_to_url(String filepath)
+
+Loads an image from a file, and encodes it as a URL.  This URL will work in a CSS "background" property, or in an HTML <img> tag.
+
+Notes:
+· The URL contains all of the pixel data, and can therefore be very long.
+· Returns an empty string if the filepath or file content is invalid.
+· JPG, GIF, PNG, and BMP files are supported.
+· Not all email clients support inline image data.
+
+Example	Result
+texture_file_to_url("c:\example\test.png")	"data:image/png;base64,iVBORw0KGgoAAAANSU...kJggg=="
+
+
+String texture_stock_to_url(Number texture_index)
+
+Returns a stock texture, encoded as a URL.  This URL will work in a CSS "background" property, or in an HTML <img> tag.
+
+Notes:
+· The URL contains all of the pixel data, and can therefore be very long.
+· Returns an empty string if 'texture_index' is invalid.
+· The stock textures are the same ones used by skins.  They are located in "c:\Program Files (x86)\Common Files\skin.dll".
+· Not all email clients support inline image data.
+
+Example	Result
+texture_stock_to_url(0)	"data:image/png;base64,iVBORw0KGgoAAAANSU...kJggg=="
+
+
+Date time_build(Number hours, Number minutes, Number seconds)
+
+Returns a time built from the three parameters.  The 'hours' parameter should be specified in military hours (0-23).
+
+Example	Result
+time_build(14, 58, 27)	#14:58:27#
+
+
+Number time_compare(Date t1, Date t2)
+
+Returns the result of comparing the time in the 't1' parameter to the time in the 't2' parameter.  The return value is < 0 if 't1' < 't2', equal to 0 if 't1' = 't2', and > 0 if 't1' > 't2'.  Any date information in 't1' and 't2' is ignored.
+
+Example	Result
+time_compare(#14:18:22#, #14:18:22#)	0
+time_compare(#4:18:22#, #15:11:03#)	-1
+time_compare(#22:19:22#, #14:18:23#)	1
+
+
+Boolean time_valid(Date t)
+
+Returns TRUE if the 't' parameter contains a valid time.  Returns FALSE otherwise.  Any date information in 't' is ignored.
+
+Example	Result
+time_valid(#14:58:27#)	TRUE
+time_valid(#99:99:99#)	FALSE
+time_valid(#99-Sep-9999 14:58:27#)	TRUE
+
+
+Number time_zone_bias_minutes()
+Returns the number of minutes that can be subtracted from the local time to convert it to UTC time.  This value is known as the "time zone bias".
+
+Example	Result
+time_zone_bias_minutes()	-300
+
+
+String time_zone_bias_text()
+Returns the text of the "time zone bias".  For example, if the system is set to U.S. Central Time, which is 6 hours later than UTC time, this function returns "-0600".
+
+Example	Result
+time_zone_bias_text()	"-0500"
+
+
+String view_in_browser()
+This function can only be called from the HTML Body, and only if the View In Browser feature is enabled.  It signals that the HTML Body should be uploaded to your website before the email is sent.  And it automatically generates a unique filename for the HTML Body file, which is returned.  You should use this in the HTML Body's "View In Browser" hyperlink, like this:
+
+<a href="http://www.example.com/emails/[[view_in_browser()]]">View In Browser</a>
+
+Notes:
+· The filename in automatically generated in a way that keeps it unique to the recipient, the campaign, and your computer.  "40EEA1EDE332A96F.htm" is an example.
+· If the HTML Body does not call view_in_browser(), then no upload will occur.
+
+
+
+String write_filepath()
+Returns the filepath of the email file that was just written.  This only applies when Write Email To Files is checked.  This should only be used in the Success Script.
+
+
+Boolean xor(Boolean, Boolean)
+Returns the exclusive-or of two Boolean values.  This returns TRUE if the two values are different, FALSE if they are the same.
+Example	Result
+xor(FALSE, FALSE)	FALSE
+xor(FALSE, TRUE)	TRUE
+xor(TRUE, FALSE)	TRUE
+xor(TRUE, TRUE)	FALSE
+
+
+If you would like to see a new function added to G-Merge, simply send a request to support@gammadyne.com.
